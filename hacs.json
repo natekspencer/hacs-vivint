@@ -1,0 +1,12 @@
+{
+  "name": "Vivint",
+  "render_readme": true,
+  "domains": [
+    "alarm_control_panel",
+    "binary_sensor",
+    "cover",
+    "lock",
+    "sensor"
+  ],
+  "iot_class": "Cloud Polling"
+}

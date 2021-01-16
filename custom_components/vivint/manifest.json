@@ -1,0 +1,17 @@
+{
+  "domain": "vivint",
+  "name": "Vivint",
+  "config_flow": true,
+  "documentation": "https://github.com/natekspencer/hacs-vivint",
+  "issue_tracker": "https://github.com/natekspencer/hacs-vivint/issues",
+  "requirements": [
+    "git+https://github.com/natekspencer/pyvivintsky.git#pyvivintsky==0.0.3"
+  ],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@natekspencer"
+  ]
+}

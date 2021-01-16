@@ -1,0 +1,21 @@
+{
+  "config": {
+    "title": "Vivint",
+    "step": {
+      "user": {
+        "title": "Authenticate with the Vivint API",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect, please try again",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Account is already configured"
+    }
+  }
+}
