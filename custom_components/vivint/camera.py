@@ -1,7 +1,10 @@
 """Support for Vivint cameras."""
+import asyncio
 from typing import Any, Dict
 
+from haffmpeg.tools import IMAGE_JPEG, ImageFrame
 from homeassistant.components.camera import SUPPORT_STREAM, Camera
+from homeassistant.components.ffmpeg import DATA_FFMPEG
 from homeassistant.core import callback
 from pyvivintsky import VivintCamera
 
@@ -39,6 +42,7 @@ class VivintCam(Camera):
     async def async_added_to_hass(self) -> None:
         """Set up a listener for the entity."""
         self.device._callback = self._update_callback
+        self._ffmpeg = self.hass.data[DATA_FFMPEG]
 
     @callback
     def _update_callback(self) -> None:
@@ -76,3 +80,11 @@ class VivintCam(Camera):
             "sw_version": self.device.software_version,
             "via_device": (VIVINT_DOMAIN, self.device.get_root().id),
         }
+
+    async def async_camera_image(self):
+        """Return a frame from the camera stream."""
+        ffmpeg = ImageFrame(self.hass.data[DATA_FFMPEG].binary)
+        image = await asyncio.shield(
+            ffmpeg.get_image(await self.stream_source(), output_format=IMAGE_JPEG)
+        )
+        return image
