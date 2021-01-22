@@ -4,6 +4,7 @@
   "domains": [
     "alarm_control_panel",
     "binary_sensor",
+    "camera",
     "cover",
     "lock",
     "sensor"
