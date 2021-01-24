@@ -1,19 +1,22 @@
 """The Vivint integration."""
 import asyncio
 from datetime import timedelta
+from typing import Any, Dict
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from aiohttp import ClientResponseError
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
 )
-from pyvivintsky import VivintSky
+from pyvivint.devices import VivintDevice
+from pyvivint.devices.alarm_panel import AlarmPanel
+from pyvivint.vivint import Vivint
 
 from .const import _LOGGER, VIVINT_DOMAIN, VIVINT_PLATFORMS
 
@@ -93,27 +96,26 @@ class VivintHub:
         self.api = None
         self.logged_in = False
 
-        # async def async_update_data():
-        #     """Update all device states from the Vivint API."""
-        #     for panel_id in self.api.get_panels():
-        #         panel = self.api.get_panel(panel_id)
-        #         await panel.poll_devices()
-        #     return True
+        async def async_update_data():
+            """Update all device states from the Vivint API."""
+            return await self.api.refresh()
 
         self.coordinator = DataUpdateCoordinator(
             hass,
             _LOGGER,
             name=VIVINT_DOMAIN,
-            # update_method=async_update_data,
-            update_interval=timedelta(days=1),
+            update_method=async_update_data,
+            update_interval=timedelta(minutes=5),
         )
 
     async def login(self):
         """Login to Vivint."""
         _LOGGER.debug("Trying to connect to Vivint API")
         try:
-            self.api = VivintSky(self.config[CONF_USERNAME], self.config[CONF_PASSWORD])
-            await self.api.connect()
+            self.api = Vivint(self.config[CONF_USERNAME], self.config[CONF_PASSWORD])
+            await self.api.connect(
+                load_devices=True, subscribe_for_realtime_updates=True
+            )
         except ClientResponseError as ex:
             _LOGGER.error("Unable to connect to Vivint API")
             raise ConfigEntryNotReady from ex
@@ -125,16 +127,47 @@ class VivintHub:
         _LOGGER.debug("Successfully connected to Vivint API")
 
 
-# class VivintEntity(CoordinatorEntity):
-#     """Generic Vivint entity representing common data and methods."""
+class VivintEntity(CoordinatorEntity):
+    """Generic Vivint entity representing common data and methods."""
 
-#     def __init__(self, type, hub: VivintHub):
-#         """Pass coordinator to CoordinatorEntity."""
-#         super().__init__(hub.coordinator)
-#         self.type = type if type else ""
-#         self.hub = hub
+    def __init__(self, hub: VivintHub, device: VivintDevice):
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(hub.coordinator)
+        self.hub = hub
+        self.device = device
 
-#     @property
-#     def available(self):
-#         """Return availability."""
-#         return self.hub.logged_in
+    async def async_added_to_hass(self) -> None:
+        """Set up a listener for the entity."""
+        await super().async_added_to_hass()
+        self.device.add_update_callback(self._update_callback)
+
+    @callback
+    def _update_callback(self) -> None:
+        """Call from dispatcher when state changes."""
+        self.async_write_ha_state()
+
+    @property
+    def name(self):
+        """Return the name of this entity."""
+        return self.device.name
+
+    @property
+    def available(self):
+        """Return availability."""
+        return self.hub.logged_in
+
+    @property
+    def device_info(self) -> Dict[str, Any]:
+        """Return the device information for a Vivint device."""
+        return {
+            "identifiers": {
+                (VIVINT_DOMAIN, self.device.serial_number or self.unique_id)
+            },
+            "name": self.device.name,
+            "manufacturer": self.device.manufacturer,
+            "model": self.device.model,
+            "sw_version": self.device.software_version,
+            "via_device": None
+            if type(self.device) is AlarmPanel
+            else (VIVINT_DOMAIN, self.device.alarm_panel.id),
+        }
