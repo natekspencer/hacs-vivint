@@ -31,6 +31,13 @@ There is a config flow for this Vivint integration. After installing the custom 
 3. Search for **Vivint** and click on it
 4. You will be guided through the rest of the setup process via the config flow
 
+## TODO
+* Add configuration option to use a camera's external rtsp stream instead of internal
+* Add support for multi-level switches and thermostats**
+* Add support for 2FA**
+
+** These can't be done until the underlying library has been updated
+
 ## Support Me
 > I'm not employed by Vivint, and provide this custom component purely for your own enjoyment and home automation needs. 
 >
