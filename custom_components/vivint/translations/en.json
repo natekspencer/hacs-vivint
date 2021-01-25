@@ -1,6 +1,5 @@
 {
   "config": {
-    "title": "Vivint",
     "step": {
       "user": {
         "title": "Authenticate with the Vivint API",
@@ -16,6 +15,16 @@
     },
     "abort": {
       "already_configured": "Account is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "hd_stream": "Stream camera in HD",
+          "rtsp_stream": "Select which RTSP camera stream to use"
+        }
+      }
     }
   }
 }

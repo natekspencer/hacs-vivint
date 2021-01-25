@@ -50,7 +50,9 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up config entry."""
-    hub = VivintHub(hass, entry.data)
+    undo_listener = entry.add_update_listener(update_listener)
+
+    hub = VivintHub(hass, entry.data, undo_listener)
 
     await hub.login()
     if not hub.logged_in:
@@ -78,7 +80,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         )
     )
 
-    hass.data[VIVINT_DOMAIN][entry.entry_id].api.disconnect()
+    hub = hass.data[VIVINT_DOMAIN][entry.entry_id]
+    await hub.api.disconnect()
+    hub.undo_listener()
 
     if unload_ok:
         hass.data[VIVINT_DOMAIN].pop(entry.entry_id)
@@ -86,13 +90,18 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     return unload_ok
 
 
+async def update_listener(hass, entry: ConfigEntry):
+    """Handle options update."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
 class VivintHub:
     """A Vivint hub wrapper class."""
 
-    def __init__(self, hass, domain_config):
+    def __init__(self, hass, domain_config, undo_listener):
         """Initialize the Vivint hub."""
         self.config = domain_config
-        self._hass = hass
+        self.undo_listener = undo_listener
         self.api = None
         self.logged_in = False
 

@@ -31,8 +31,16 @@ There is a config flow for this Vivint integration. After installing the custom 
 3. Search for **Vivint** and click on it
 4. You will be guided through the rest of the setup process via the config flow
 
+# Options
+
+After this integration is set up, you can configure a couple of options relating to the camera streams:
+* **HD Stream** - indicates whether to stream the camera in high definition or not, defaults to `True`
+* **RTSP Stream** -  which RTSP stream source to use, defeaults to `Direct`. Can be one of:
+  * Direct - falls back to the internal RTSP stream if direct access in unavailable
+  * Internal
+  * External
+
 ## TODO
-* Add configuration option to use a camera's external rtsp stream instead of internal
 * Add support for multi-level switches and thermostats**
 * Add support for 2FA**
 

@@ -2,13 +2,12 @@
 from typing import Any, Dict
 
 from homeassistant.const import DEVICE_CLASS_BATTERY, PERCENTAGE
-from homeassistant.core import callback
 from homeassistant.helpers.entity import Entity
 from pyvivint.devices import UnknownDevice
 from pyvivint.devices.camera import Camera
 from pyvivint.devices.garage_door import GarageDoor
 
-from . import VivintEntity, VivintHub
+from . import VivintEntity
 from .const import _LOGGER, VIVINT_DOMAIN
 
 
