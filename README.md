@@ -35,10 +35,10 @@ There is a config flow for this Vivint integration. After installing the custom 
 
 After this integration is set up, you can configure a couple of options relating to the camera streams:
 * **HD Stream** - indicates whether to stream the camera in high definition or not, defaults to `True`
-* **RTSP Stream** -  which RTSP stream source to use, defeaults to `Direct`. Can be one of:
-  * Direct - falls back to the internal RTSP stream if direct access in unavailable
-  * Internal
-  * External
+* **RTSP Stream** -  which RTSP stream source to use, defaults to `Direct`. Can be one of:
+  * *Direct* - falls back to the internal RTSP stream if direct access is unavailable
+  * *Internal* - use this if, for some reason, you have a camera that doesn't seem to stream despite the Vivint API indicating direct access is available for it
+  * *External* - use this option if your Vivint system and Home Assistant installation are on separate networks without access to each other
 
 ## TODO
 * Add support for multi-level switches and thermostats**
