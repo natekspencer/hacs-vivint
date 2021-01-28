@@ -1,5 +1,4 @@
 """Support for Vivint cameras."""
-
 from homeassistant.components.camera import SUPPORT_STREAM, Camera
 from homeassistant.components.ffmpeg import async_get_image
 from pyvivint.devices import VivintDevice
@@ -76,18 +75,18 @@ class VivintCam(VivintEntity, Camera):
             self.__stream_source = (
                 await self.device.get_direct_rtsp_url(hd=self.__hd_stream)
                 if self.__rtsp_stream == RTSP_STREAM_DIRECT
-                else await self.device.get_rtsp_url(
-                    internal=self.__rtsp_stream != RTSP_STREAM_EXTERNAL,
-                    hd=self.__hd_stream,
-                )
+                else None
+            ) or await self.device.get_rtsp_url(
+                internal=self.__rtsp_stream != RTSP_STREAM_EXTERNAL, hd=self.__hd_stream
             )
         return self.__stream_source
 
     async def async_camera_image(self):
         """Return a frame from the camera stream."""
         try:
-            rtsp_url = await self.stream_source()
-            self.__last_image = await async_get_image(self.hass, rtsp_url)
+            self.__last_image = await async_get_image(
+                self.hass, await self.stream_source()
+            )
         except:
             _LOGGER.debug(f"Could not retrieve latest image for {self.name}")
         finally:
