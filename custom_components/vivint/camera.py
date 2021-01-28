@@ -1,9 +1,7 @@
 """Support for Vivint cameras."""
-import asyncio
 
-from haffmpeg.tools import IMAGE_JPEG, ImageFrame
 from homeassistant.components.camera import SUPPORT_STREAM, Camera
-from homeassistant.components.ffmpeg import DATA_FFMPEG
+from homeassistant.components.ffmpeg import async_get_image
 from pyvivint.devices import VivintDevice
 from pyvivint.devices.camera import Camera as VivintCamera
 
@@ -41,7 +39,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     if not entities:
         return
 
-    _LOGGER.debug(f"Adding Vivint cameras: {entities}")
     async_add_entities(entities, True)
 
 
@@ -57,8 +54,11 @@ class VivintCam(VivintEntity, Camera):
     ):
         super().__init__(hub, device)
         Camera.__init__(self)
+
         self.__hd_stream = hd_stream
         self.__rtsp_stream = rtsp_stream
+        self.__stream_source = None
+        self.__last_image = None
 
     @property
     def supported_features(self):
@@ -72,17 +72,23 @@ class VivintCam(VivintEntity, Camera):
 
     async def stream_source(self):
         """Return the source of the stream."""
-        direct = await self.device.get_direct_rtsp_url(hd=self.__hd_stream)
-        return (
-            direct if self.__rtsp_stream == RTSP_STREAM_DIRECT else None
-        ) or await self.device.get_rtsp_url(
-            internal=self.__rtsp_stream != RTSP_STREAM_EXTERNAL, hd=self.__hd_stream
-        )
+        if not self.__stream_source:
+            self.__stream_source = (
+                await self.device.get_direct_rtsp_url(hd=self.__hd_stream)
+                if self.__rtsp_stream == RTSP_STREAM_DIRECT
+                else await self.device.get_rtsp_url(
+                    internal=self.__rtsp_stream != RTSP_STREAM_EXTERNAL,
+                    hd=self.__hd_stream,
+                )
+            )
+        return self.__stream_source
 
     async def async_camera_image(self):
         """Return a frame from the camera stream."""
-        ffmpeg = ImageFrame(self.hass.data[DATA_FFMPEG].binary)
-        image = await asyncio.shield(
-            ffmpeg.get_image(await self.stream_source(), output_format=IMAGE_JPEG)
-        )
-        return image
+        try:
+            rtsp_url = await self.stream_source()
+            self.__last_image = await async_get_image(self.hass, rtsp_url)
+        except:
+            _LOGGER.debug(f"Could not retrieve latest image for {self.name}")
+        finally:
+            return self.__last_image

@@ -20,7 +20,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     if not entities:
         return
 
-    _LOGGER.debug(f"Adding Vivint door locks: {entities}")
     async_add_entities(entities, True)
 
 

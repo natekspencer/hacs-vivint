@@ -10,7 +10,9 @@
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
-  "dependencies": [],
+  "dependencies": [
+    "ffmpeg"
+  ],
   "codeowners": [
     "@natekspencer"
   ]

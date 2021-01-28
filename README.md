@@ -40,17 +40,21 @@ After this integration is set up, you can configure a couple of options relating
   * *Internal* - use this if, for some reason, you have a camera that doesn't seem to stream despite the Vivint API indicating direct access is available for it
   * *External* - use this option if your Vivint system and Home Assistant installation are on separate networks without access to each other
 
+---
+
 ## TODO
 * Add support for multi-level switches and thermostats**
 * Add support for 2FA**
 
 ** These can't be done until the underlying library has been updated
 
-## Support Me
-> I'm not employed by Vivint, and provide this custom component purely for your own enjoyment and home automation needs. 
->
-> If you don't already own a Vivint system, please consider using [my referal code (kaf164)](https://www.vivint.com/get?refCode=kaf164&exid=165211vivint.com/get?refCode=kaf164&exid=165211) to get $50 off your bill (as well as a tip to me in appreciation)!
+---
 
-> If you already own a Vivint system and still want to donate, consider buying me a coffee instead by using the link below:
->
-> <a href="https://www.buymeacoffee.com/natekspencer" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-blue.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+## Support Me
+I'm not employed by Vivint, and provide this custom component purely for your own enjoyment and home automation needs. 
+
+If you don't already own a Vivint system, please consider using [my referal code (kaf164)](https://www.vivint.com/get?refCode=kaf164&exid=165211vivint.com/get?refCode=kaf164&exid=165211) to get $50 off your bill (as well as a tip to me in appreciation)!
+
+If you already own a Vivint system and still want to donate, consider buying me a coffee ☕ (or beer 🍺) instead by using the link below:
+
+<a href="https://www.buymeacoffee.com/natekspencer" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-blue.png" alt="Buy Me A Coffee" height="41" width="174"></a>

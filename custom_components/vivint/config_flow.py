@@ -1,7 +1,6 @@
 """Config flow for Vivint integration."""
 from typing import Any, Dict, Optional
 
-import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from aiohttp import ClientResponseError
 from homeassistant import config_entries

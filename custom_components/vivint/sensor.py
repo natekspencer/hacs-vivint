@@ -28,7 +28,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     if not entities:
         return
 
-    _LOGGER.debug(f"Adding Vivint sensors: {entities}")
     async_add_entities(entities, True)
 
 
