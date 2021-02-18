@@ -1,4 +1,5 @@
 """Config flow for Vivint integration."""
+import logging
 from typing import Any, Dict, Optional
 
 import voluptuous as vol
@@ -9,17 +10,18 @@ from homeassistant.core import callback
 from pyvivint.vivint import Vivint
 
 from .const import (
-    _LOGGER,
     CONF_HD_STREAM,
     CONF_RTSP_STREAM,
     DEFAULT_HD_STREAM,
     DEFAULT_RTSP_STREAM,
+    DOMAIN,
     RTSP_STREAM_TYPES,
-    VIVINT_DOMAIN,
 )
 
+_LOGGER = logging.getLogger(__name__)
 
-class VivintFlowHandler(config_entries.ConfigFlow, domain=VIVINT_DOMAIN):
+
+class VivintFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a Vivint config flow."""
 
     VERSION = 1

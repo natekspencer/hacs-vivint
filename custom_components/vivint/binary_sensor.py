@@ -16,13 +16,13 @@ from pyvivint.devices.wireless_sensor import WirelessSensor
 from pyvivint.enums import EquipmentType, SensorType
 
 from . import VivintEntity
-from .const import _LOGGER, VIVINT_DOMAIN
+from .const import DOMAIN
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Vivint binary sensors using config entry."""
     entities = []
-    hub = hass.data[VIVINT_DOMAIN][config_entry.entry_id]
+    hub = hass.data[DOMAIN][config_entry.entry_id]
 
     for system in hub.api.systems:
         for alarm_panel in system.alarm_panels:

@@ -8,13 +8,13 @@ from homeassistant.components.cover import (
 from pyvivint.devices.garage_door import GarageDoor
 
 from . import VivintEntity
-from .const import _LOGGER, VIVINT_DOMAIN
+from .const import DOMAIN
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Vivint garage doors using config entry."""
     entities = []
-    hub = hass.data[VIVINT_DOMAIN][config_entry.entry_id]
+    hub = hass.data[DOMAIN][config_entry.entry_id]
 
     for system in hub.api.systems:
         for alarm_panel in system.alarm_panels:

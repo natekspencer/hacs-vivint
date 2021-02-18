@@ -6,15 +6,11 @@
   "documentation": "https://github.com/natekspencer/hacs-vivint",
   "issue_tracker": "https://github.com/natekspencer/hacs-vivint/issues",
   "requirements": [
-    "pyvivint==2021.1.1"
+    "git+https://github.com/natekspencer/pyvivint.git@combined#pyvivint==2021.2.0"
   ],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
-  "dependencies": [
-    "ffmpeg"
-  ],
-  "codeowners": [
-    "@natekspencer"
-  ]
+  "dependencies": ["ffmpeg"],
+  "codeowners": ["@natekspencer"]
 }

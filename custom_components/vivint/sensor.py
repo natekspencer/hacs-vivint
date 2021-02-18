@@ -1,26 +1,23 @@
 """Support for Vivint sensors."""
-from typing import Any, Dict
-
 from homeassistant.const import DEVICE_CLASS_BATTERY, PERCENTAGE
 from homeassistant.helpers.entity import Entity
-from pyvivint.devices import UnknownDevice
-from pyvivint.devices.camera import Camera
-from pyvivint.devices.garage_door import GarageDoor
+from pyvivint.devices.door_lock import DoorLock
+from pyvivint.devices.wireless_sensor import WirelessSensor
 
 from . import VivintEntity
-from .const import _LOGGER, VIVINT_DOMAIN
+from .const import DOMAIN
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Vivint sensors using config entry."""
     entities = []
-    hub = hass.data[VIVINT_DOMAIN][config_entry.entry_id]
+    hub = hass.data[DOMAIN][config_entry.entry_id]
 
     for system in hub.api.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
                 if (
-                    type(device) not in [UnknownDevice, Camera, GarageDoor]
+                    type(device) in [DoorLock, WirelessSensor]
                     and device.battery_level is not None
                 ):
                     entities.append(VivintSensorEntity(hub, device))
