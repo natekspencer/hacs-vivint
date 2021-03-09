@@ -20,9 +20,9 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE_RANGE,
 )
 from homeassistant.const import TEMP_CELSIUS
-from pyvivint.constants import ThermostatAttribute
-from pyvivint.devices.thermostat import Thermostat
-from pyvivint.enums import OperatingMode
+from vivintpy.constants import ThermostatAttribute
+from vivintpy.devices.thermostat import Thermostat
+from vivintpy.enums import OperatingMode
 
 from . import VivintEntity
 from .const import DOMAIN
