@@ -13,9 +13,9 @@ from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
 )
-from pyvivint.devices import VivintDevice
-from pyvivint.devices.alarm_panel import AlarmPanel
-from pyvivint.vivint import Vivint
+from vivintpy.account import Account
+from vivintpy.devices import VivintDevice
+from vivintpy.devices.alarm_panel import AlarmPanel
 
 from .const import DOMAIN
 
@@ -114,7 +114,7 @@ class VivintHub:
         """Login to Vivint."""
         _LOGGER.debug("Trying to connect to Vivint API")
         try:
-            self.api = Vivint(self.config[CONF_USERNAME], self.config[CONF_PASSWORD])
+            self.api = Account(self.config[CONF_USERNAME], self.config[CONF_PASSWORD])
             await self.api.connect(
                 load_devices=True, subscribe_for_realtime_updates=True
             )

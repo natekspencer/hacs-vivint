@@ -1,6 +1,6 @@
 """Support for Vivint door locks."""
 from homeassistant.components.lock import LockEntity
-from pyvivint.devices.door_lock import DoorLock
+from vivintpy.devices.door_lock import DoorLock
 
 from . import VivintEntity
 from .const import DOMAIN
