@@ -48,5 +48,5 @@ class VivintSensorEntity(VivintEntity, Entity):
 
     @property
     def device_class(self):
-        """Return the class of this device, from component DEVICE_CLASSES."""
+        """Return the class of this device."""
         return DEVICE_CLASS_BATTERY

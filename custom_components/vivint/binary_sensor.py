@@ -51,7 +51,7 @@ class VivintBinarySensorEntity(VivintEntity, BinarySensorEntity):
 
     @property
     def device_class(self):
-        """Return the class of this device, from component DEVICE_CLASSES."""
+        """Return the class of this device."""
         equipment_type = self.device.equipment_type
 
         if equipment_type == EquipmentType.MOTION:
