@@ -5,7 +5,7 @@ from homeassistant.components.cover import (
     SUPPORT_OPEN,
     CoverEntity,
 )
-from pyvivint.devices.garage_door import GarageDoor
+from vivintpy.devices.garage_door import GarageDoor
 
 from . import VivintEntity
 from .const import _LOGGER, VIVINT_DOMAIN

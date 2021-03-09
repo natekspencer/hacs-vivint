@@ -10,7 +10,7 @@ from homeassistant.const import (
     STATE_ALARM_DISARMED,
     STATE_ALARM_TRIGGERED,
 )
-from pyvivint.enums import ArmedState
+from vivintpy.enums import ArmedState
 
 from . import VivintEntity
 from .const import _LOGGER, VIVINT_DOMAIN

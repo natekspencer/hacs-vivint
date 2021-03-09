@@ -12,8 +12,8 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_WINDOW,
     BinarySensorEntity,
 )
-from pyvivint.devices.wireless_sensor import WirelessSensor
-from pyvivint.enums import EquipmentType, SensorType
+from vivintpy.devices.wireless_sensor import WirelessSensor
+from vivintpy.enums import EquipmentType, SensorType
 
 from . import VivintEntity
 from .const import _LOGGER, VIVINT_DOMAIN
