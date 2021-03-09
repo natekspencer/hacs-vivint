@@ -7,7 +7,7 @@ from aiohttp import ClientResponseError
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
-from pyvivint.vivint import Vivint
+from vivintpy.account import Account
 
 from .const import (
     CONF_HD_STREAM,
@@ -43,7 +43,7 @@ class VivintFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 _LOGGER.debug("Attempting to login to Vivint API.")
-                api = Vivint(user_input[CONF_USERNAME], user_input[CONF_PASSWORD])
+                api = Account(user_input[CONF_USERNAME], user_input[CONF_PASSWORD])
                 await api.connect()
                 _LOGGER.debug("Successfully logged in.")
                 return self.async_create_entry(

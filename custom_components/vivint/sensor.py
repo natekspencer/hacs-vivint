@@ -1,8 +1,6 @@
 """Support for Vivint sensors."""
 from homeassistant.const import DEVICE_CLASS_BATTERY, PERCENTAGE
 from homeassistant.helpers.entity import Entity
-from pyvivint.devices.door_lock import DoorLock
-from pyvivint.devices.wireless_sensor import WirelessSensor
 
 from . import VivintEntity
 from .const import DOMAIN
@@ -16,10 +14,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     for system in hub.api.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
-                if (
-                    type(device) in [DoorLock, WirelessSensor]
-                    and device.battery_level is not None
-                ):
+                if getattr(device, "battery_level", None) is not None:
                     entities.append(VivintSensorEntity(hub, device))
 
     if not entities:

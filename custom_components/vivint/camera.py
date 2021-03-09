@@ -3,8 +3,8 @@ import logging
 
 from homeassistant.components.camera import SUPPORT_STREAM, Camera
 from homeassistant.components.ffmpeg import async_get_image
-from pyvivint.devices import VivintDevice
-from pyvivint.devices.camera import Camera as VivintCamera
+from vivintpy.devices import VivintDevice
+from vivintpy.devices.camera import Camera as VivintCamera
 
 from . import VivintEntity, VivintHub
 from .const import (
