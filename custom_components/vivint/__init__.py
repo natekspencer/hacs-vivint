@@ -25,6 +25,7 @@ PLATFORMS = [
     "alarm_control_panel",
     "binary_sensor",
     "camera",
+    "climate",
     "cover",
     "light",
     "lock",
