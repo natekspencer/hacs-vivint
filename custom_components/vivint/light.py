@@ -4,7 +4,7 @@ from homeassistant.components.light import (
     SUPPORT_BRIGHTNESS,
     LightEntity,
 )
-from pyvivint.devices.switch import MultilevelSwitch
+from vivintpy.devices.switch import MultilevelSwitch
 
 from . import VivintEntity
 from .const import DOMAIN

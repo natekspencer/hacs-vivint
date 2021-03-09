@@ -1,6 +1,6 @@
 """Support for Vivint switches."""
 from homeassistant.components.switch import SwitchEntity
-from pyvivint.devices.switch import BinarySwitch
+from vivintpy.devices.switch import BinarySwitch
 
 from . import VivintEntity
 from .const import DOMAIN
