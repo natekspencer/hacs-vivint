@@ -4,10 +4,8 @@ import logging
 from datetime import timedelta
 from typing import Any, Dict
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
 from aiohttp import ClientResponseError
-from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
@@ -27,6 +25,7 @@ PLATFORMS = [
     "alarm_control_panel",
     "binary_sensor",
     "camera",
+    "climate",
     "cover",
     "light",
     "lock",
