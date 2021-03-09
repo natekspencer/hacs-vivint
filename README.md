@@ -50,7 +50,7 @@ After this integration is set up, you can configure a couple of options relating
 
 ## TODO
 
-- Add support for thermostats\*\*
+- Add advanced support for thermostats\*\*
 - Add support for 2FA\*\*
 
 \*\* These can't be done until the underlying library has been updated
