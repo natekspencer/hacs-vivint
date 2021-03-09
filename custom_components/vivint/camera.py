@@ -1,4 +1,6 @@
 """Support for Vivint cameras."""
+import logging
+
 from homeassistant.components.camera import SUPPORT_STREAM, Camera
 from homeassistant.components.ffmpeg import async_get_image
 from vivintpy.devices import VivintDevice
@@ -6,21 +8,22 @@ from vivintpy.devices.camera import Camera as VivintCamera
 
 from . import VivintEntity, VivintHub
 from .const import (
-    _LOGGER,
     CONF_HD_STREAM,
     CONF_RTSP_STREAM,
     DEFAULT_HD_STREAM,
     DEFAULT_RTSP_STREAM,
+    DOMAIN,
     RTSP_STREAM_DIRECT,
     RTSP_STREAM_EXTERNAL,
-    VIVINT_DOMAIN,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Vivint cameras using config entry."""
     entities = []
-    hub = hass.data[VIVINT_DOMAIN][config_entry.entry_id]
+    hub = hass.data[DOMAIN][config_entry.entry_id]
 
     hd_stream = config_entry.options.get(CONF_HD_STREAM, DEFAULT_HD_STREAM)
     rtsp_stream = config_entry.options.get(CONF_RTSP_STREAM, DEFAULT_RTSP_STREAM)

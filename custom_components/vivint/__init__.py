@@ -1,12 +1,11 @@
 """The Vivint integration."""
 import asyncio
+import logging
 from datetime import timedelta
 from typing import Any, Dict
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
 from aiohttp import ClientResponseError
-from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
@@ -18,38 +17,31 @@ from vivintpy.account import Account
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.alarm_panel import AlarmPanel
 
-from .const import _LOGGER, VIVINT_DOMAIN, VIVINT_PLATFORMS
+from .const import DOMAIN
 
-CONFIG_SCHEMA = vol.Schema(
-    {
-        VIVINT_DOMAIN: vol.Schema(
-            {
-                vol.Required(CONF_USERNAME): cv.string,
-                vol.Required(CONF_PASSWORD): cv.string,
-            }
-        )
-    },
-    extra=vol.ALLOW_EXTRA,
-)
+_LOGGER = logging.getLogger(__name__)
+
+PLATFORMS = [
+    "alarm_control_panel",
+    "binary_sensor",
+    "camera",
+    "cover",
+    "light",
+    "lock",
+    "sensor",
+    "switch",
+]
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
-    """Setup the Vivint component."""
-    hass.data[VIVINT_DOMAIN] = {}
+    """Set up the Vivint component."""
+    hass.data.setdefault(DOMAIN, {})
 
-    if VIVINT_DOMAIN not in config:
-        return True
-
-    for entry in config[VIVINT_DOMAIN]:
-        hass.async_create_task(
-            hass.config_entries.flow.async_init(
-                VIVINT_DOMAIN, context={"source": SOURCE_IMPORT}, data=entry
-            )
-        )
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Set up config entry."""
+    """Set up Vivint from a config entry."""
     undo_listener = entry.add_update_listener(update_listener)
 
     hub = VivintHub(hass, entry.data, undo_listener)
@@ -59,9 +51,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         _LOGGER.debug("Failed to login to Vivint API")
         return False
 
-    hass.data[VIVINT_DOMAIN][entry.entry_id] = hub
+    hass.data[DOMAIN][entry.entry_id] = hub
 
-    for component in VIVINT_PLATFORMS:
+    for component in PLATFORMS:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
@@ -75,17 +67,17 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         await asyncio.gather(
             *[
                 hass.config_entries.async_forward_entry_unload(entry, component)
-                for component in VIVINT_PLATFORMS
+                for component in PLATFORMS
             ]
         )
     )
 
-    hub = hass.data[VIVINT_DOMAIN][entry.entry_id]
+    hub = hass.data[DOMAIN][entry.entry_id]
     await hub.api.disconnect()
     hub.undo_listener()
 
     if unload_ok:
-        hass.data[VIVINT_DOMAIN].pop(entry.entry_id)
+        hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
 
@@ -112,7 +104,7 @@ class VivintHub:
         self.coordinator = DataUpdateCoordinator(
             hass,
             _LOGGER,
-            name=VIVINT_DOMAIN,
+            name=DOMAIN,
             update_method=async_update_data,
             update_interval=timedelta(minutes=5),
         )
@@ -169,14 +161,12 @@ class VivintEntity(CoordinatorEntity):
     def device_info(self) -> Dict[str, Any]:
         """Return the device information for a Vivint device."""
         return {
-            "identifiers": {
-                (VIVINT_DOMAIN, self.device.serial_number or self.unique_id)
-            },
+            "identifiers": {(DOMAIN, self.device.serial_number or self.unique_id)},
             "name": self.device.name,
             "manufacturer": self.device.manufacturer,
             "model": self.device.model,
             "sw_version": self.device.software_version,
             "via_device": None
             if type(self.device) is AlarmPanel
-            else (VIVINT_DOMAIN, self.device.alarm_panel.id),
+            else (DOMAIN, self.device.alarm_panel.id),
         }

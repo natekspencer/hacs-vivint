@@ -6,8 +6,10 @@
     "binary_sensor",
     "camera",
     "cover",
+    "light",
     "lock",
-    "sensor"
+    "sensor",
+    "switch"
   ],
   "iot_class": "Cloud Polling"
 }
