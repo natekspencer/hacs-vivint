@@ -1,9 +1,6 @@
 """Support for Vivint sensors."""
 from homeassistant.const import DEVICE_CLASS_BATTERY, PERCENTAGE
 from homeassistant.helpers.entity import Entity
-from vivintpy.devices import UnknownDevice
-from vivintpy.devices.camera import Camera
-from vivintpy.devices.garage_door import GarageDoor
 
 from . import VivintEntity
 from .const import DOMAIN
@@ -51,5 +48,5 @@ class VivintSensorEntity(VivintEntity, Entity):
 
     @property
     def device_class(self):
-        """Return the class of this device, from component DEVICE_CLASSES."""
+        """Return the class of this device."""
         return DEVICE_CLASS_BATTERY
