@@ -20,12 +20,12 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE_RANGE,
 )
 from homeassistant.const import TEMP_CELSIUS
-from vivintpy.constants import ThermostatAttribute
+from vivintpy.const import ThermostatAttribute
 from vivintpy.devices.thermostat import Thermostat
 from vivintpy.enums import OperatingMode
 
-from . import VivintEntity
 from .const import DOMAIN
+from .hub import VivintEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -69,12 +69,11 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
 
-    for system in hub.api.systems:
+    for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
-                _LOGGER.debug(type(device))
                 if type(device) is Thermostat:
-                    entities.append(VivintClimate(hub, device))
+                    entities.append(VivintClimate(device=device, hub=hub))
 
     if not entities:
         return

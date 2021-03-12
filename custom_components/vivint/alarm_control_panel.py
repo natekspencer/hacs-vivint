@@ -12,8 +12,8 @@ from homeassistant.const import (
 )
 from vivintpy.enums import ArmedState
 
-from . import VivintEntity
 from .const import DOMAIN
+from .hub import VivintEntity
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -21,9 +21,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
 
-    for system in hub.api.systems:
-        for alarm_panel in system.alarm_panels:
-            entities.append(VivintAlarmControlPanelEntity(hub, alarm_panel))
+    for system in hub.account.systems:
+        for device in system.alarm_panels:
+            entities.append(VivintAlarmControlPanelEntity(device=device, hub=hub))
 
     if not entities:
         return

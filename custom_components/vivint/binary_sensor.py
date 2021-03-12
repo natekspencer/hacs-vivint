@@ -15,8 +15,8 @@ from homeassistant.components.binary_sensor import (
 from vivintpy.devices.wireless_sensor import WirelessSensor
 from vivintpy.enums import EquipmentType, SensorType
 
-from . import VivintEntity
 from .const import DOMAIN
+from .hub import VivintEntity
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -24,11 +24,11 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
 
-    for system in hub.api.systems:
+    for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
                 if type(device) is WirelessSensor:
-                    entities.append(VivintBinarySensorEntity(hub, device))
+                    entities.append(VivintBinarySensorEntity(device=device, hub=hub))
 
     if not entities:
         return

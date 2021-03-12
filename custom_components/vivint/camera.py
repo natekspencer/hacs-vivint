@@ -6,7 +6,6 @@ from homeassistant.components.ffmpeg import async_get_image
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.camera import Camera as VivintCamera
 
-from . import VivintEntity, VivintHub
 from .const import (
     CONF_HD_STREAM,
     CONF_RTSP_STREAM,
@@ -16,6 +15,7 @@ from .const import (
     RTSP_STREAM_DIRECT,
     RTSP_STREAM_EXTERNAL,
 )
+from .hub import VivintEntity, VivintHub
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,13 +28,16 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     hd_stream = config_entry.options.get(CONF_HD_STREAM, DEFAULT_HD_STREAM)
     rtsp_stream = config_entry.options.get(CONF_RTSP_STREAM, DEFAULT_RTSP_STREAM)
 
-    for system in hub.api.systems:
+    for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
                 if type(device) is VivintCamera:
                     entities.append(
                         VivintCam(
-                            hub, device, hd_stream=hd_stream, rtsp_stream=rtsp_stream
+                            device=device,
+                            hub=hub,
+                            hd_stream=hd_stream,
+                            rtsp_stream=rtsp_stream,
                         )
                     )
 
@@ -49,12 +52,12 @@ class VivintCam(VivintEntity, Camera):
 
     def __init__(
         self,
-        hub: VivintHub,
         device: VivintDevice,
+        hub: VivintHub,
         hd_stream: bool = DEFAULT_HD_STREAM,
         rtsp_stream: int = DEFAULT_RTSP_STREAM,
     ):
-        super().__init__(hub, device)
+        super().__init__(device=device, hub=hub)
         Camera.__init__(self)
 
         self.__hd_stream = hd_stream

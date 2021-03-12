@@ -2,7 +2,6 @@
   "config": {
     "step": {
       "user": {
-        "title": "Authenticate with the Vivint API",
         "data": {
           "username": "Username",
           "password": "Password"
@@ -10,7 +9,8 @@
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect, please try again",
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
       "unknown": "Unexpected error"
     },
     "abort": {

@@ -2,8 +2,8 @@
 from homeassistant.components.switch import SwitchEntity
 from vivintpy.devices.switch import BinarySwitch
 
-from . import VivintEntity
 from .const import DOMAIN
+from .hub import VivintEntity
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -11,11 +11,11 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
 
-    for system in hub.api.systems:
+    for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
                 if type(device) is BinarySwitch:
-                    entities.append(VivintSwitchEntity(hub, device))
+                    entities.append(VivintSwitchEntity(device=device, hub=hub))
 
     if not entities:
         return
