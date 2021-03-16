@@ -1,11 +1,11 @@
 {
   "domain": "vivint",
   "name": "Vivint",
-  "version": "2021.3.2",
+  "version": "2021.3.3",
   "config_flow": true,
   "documentation": "https://github.com/natekspencer/hacs-vivint",
   "issue_tracker": "https://github.com/natekspencer/hacs-vivint/issues",
-  "requirements": ["vivintpy==2021.3.2"],
+  "requirements": ["vivintpy==2021.3.3"],
   "dependencies": ["ffmpeg"],
   "codeowners": ["@natekspencer"]
 }
