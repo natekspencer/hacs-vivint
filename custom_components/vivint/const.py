@@ -1,5 +1,6 @@
 """Constants for the Vivint integration."""
 DOMAIN = "vivint"
+EVENT_TYPE = f"{DOMAIN}_event"
 
 RTSP_STREAM_DIRECT = 0
 RTSP_STREAM_INTERNAL = 1

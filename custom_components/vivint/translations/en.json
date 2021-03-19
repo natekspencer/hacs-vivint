@@ -26,5 +26,11 @@
         }
       }
     }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "doorbell_ding": "Doorbell pressed",
+      "motion_detected": "Motion detected"
+    }
   }
 }

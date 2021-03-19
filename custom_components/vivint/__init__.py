@@ -1,17 +1,19 @@
 """The Vivint integration."""
 import asyncio
-import logging
 
 from aiohttp import ClientResponseError
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.const import ATTR_DEVICE_ID, ATTR_DOMAIN
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import device_registry
+from vivintpy.devices import VivintDevice
+from vivintpy.devices.camera import DOORBELL_DING, MOTION_DETECTED, Camera
+from vivintpy.enums import CapabilityCategoryType
 from vivintpy.exceptions import VivintSkyApiAuthenticationError, VivintSkyApiError
 
-from .const import DOMAIN
-from .hub import VivintHub
-
-_LOGGER = logging.getLogger(__name__)
+from .const import DOMAIN, EVENT_TYPE
+from .hub import VivintHub, get_device_id
 
 PLATFORMS = [
     "alarm_control_panel",
@@ -24,6 +26,8 @@ PLATFORMS = [
     "sensor",
     "switch",
 ]
+
+ATTR_TYPE = "type"
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -45,6 +49,38 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         return False
     except (VivintSkyApiError, ClientResponseError) as ex:
         raise ConfigEntryNotReady from ex
+
+    dev_reg = await device_registry.async_get_registry(hass)
+
+    @callback
+    def async_on_device_event(event_type: str, viv_device: VivintDevice) -> None:
+        """Relay Vivint device event to hass."""
+        device = dev_reg.async_get_device({get_device_id(viv_device)})
+        hass.bus.async_fire(
+            EVENT_TYPE,
+            {
+                ATTR_TYPE: event_type,
+                ATTR_DOMAIN: DOMAIN,
+                ATTR_DEVICE_ID: device.id,
+            },
+        )
+
+    for system in hub.account.systems:
+        for alarm_panel in system.alarm_panels:
+            for device in alarm_panel.get_devices([Camera]):
+                device.on(
+                    MOTION_DETECTED,
+                    lambda event: async_on_device_event(
+                        MOTION_DETECTED, event["device"]
+                    ),
+                )
+                if CapabilityCategoryType.DOORBELL in device.capabilities.keys():
+                    device.on(
+                        DOORBELL_DING,
+                        lambda event: async_on_device_event(
+                            DOORBELL_DING, event["device"]
+                        ),
+                    )
 
     for platform in PLATFORMS:
         hass.async_create_task(

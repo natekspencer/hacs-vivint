@@ -1,9 +1,8 @@
 """A wrapper 'hub' for the Vivint API and base entity for common attributes."""
 import logging
 from datetime import timedelta
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
-import vivintpy.account
 from aiohttp import ClientResponseError
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
@@ -11,7 +10,10 @@ from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
 )
+from vivintpy.account import Account
+from vivintpy.devices import VivintDevice
 from vivintpy.devices.alarm_panel import AlarmPanel
+from vivintpy.entity import UPDATE
 from vivintpy.exceptions import VivintSkyApiAuthenticationError, VivintSkyApiError
 
 from .const import DOMAIN
@@ -19,6 +21,12 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 UPDATE_INTERVAL = 300
+
+
+@callback
+def get_device_id(device: VivintDevice) -> Tuple[str, str]:
+    """Get device registry identifier for device."""
+    return (DOMAIN, f"{device.panel_id}-{device.id}")
 
 
 class VivintHub:
@@ -30,7 +38,7 @@ class VivintHub:
         """Initialize the Vivint hub."""
         self._data = data
         self.undo_listener = undo_listener
-        self.account: vivintpy.account.Account = None
+        self.account: Account = None
         self.logged_in = False
 
         async def _async_update_data():
@@ -50,7 +58,7 @@ class VivintHub:
     ):
         """Login to Vivint."""
         self.logged_in = False
-        self.account = vivintpy.account.Account(
+        self.account = Account(
             username=self._data[CONF_USERNAME], password=self._data[CONF_PASSWORD]
         )
         try:
@@ -71,42 +79,32 @@ class VivintHub:
 class VivintEntity(CoordinatorEntity):
     """Generic Vivint entity representing common data and methods."""
 
-    def __init__(self, device: vivintpy.devices.VivintDevice, hub: VivintHub):
+    def __init__(self, device: VivintDevice, hub: VivintHub):
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(hub.coordinator)
         self.device = device
         self.hub = hub
 
     @callback
-    def _update_callback(self) -> None:
+    def _update_callback(self, _) -> None:
         """Call from dispatcher when state changes."""
         self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:
         """Set up a listener for the entity."""
         await super().async_added_to_hass()
-        self.device.add_update_callback(self._update_callback)
+        self.device.on(UPDATE, self._update_callback)
 
     @property
     def name(self):
         """Return the name of this entity."""
         return self.device.name
 
-    # @property
-    # def unique_id(self):
-    #     """Return a unique ID."""
-    #     return f"{self.robot.serial}-{self.entity_type}"
-
-    # @property
-    # def available(self):
-    #     """Return availability."""
-    #     return self.hub.logged_in
-
     @property
     def device_info(self) -> Dict[str, Any]:
         """Return the device information for a Vivint device."""
         return {
-            "identifiers": {(DOMAIN, self.device.serial_number or self.unique_id)},
+            "identifiers": {get_device_id(self.device)},
             "name": self.device.name,
             "manufacturer": self.device.manufacturer,
             "model": self.device.model,
