@@ -2,6 +2,7 @@
 import asyncio
 
 from aiohttp import ClientResponseError
+from aiohttp.client_exceptions import ClientConnectorError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_ID, ATTR_DOMAIN
 from homeassistant.core import HomeAssistant, callback
@@ -47,7 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         await hub.login(load_devices=True, subscribe_for_realtime_updates=True)
     except VivintSkyApiAuthenticationError:
         return False
-    except (VivintSkyApiError, ClientResponseError) as ex:
+    except (VivintSkyApiError, ClientResponseError, ClientConnectorError) as ex:
         raise ConfigEntryNotReady from ex
 
     dev_reg = await device_registry.async_get_registry(hass)

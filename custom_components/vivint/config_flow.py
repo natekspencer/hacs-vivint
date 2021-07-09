@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 
 import voluptuous as vol
 from aiohttp import ClientResponseError
+from aiohttp.client_exceptions import ClientConnectorError
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
@@ -46,7 +47,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await hub.login()
             except VivintSkyApiAuthenticationError:
                 errors["base"] = "invalid_auth"
-            except (VivintSkyApiError, ClientResponseError):
+            except (VivintSkyApiError, ClientResponseError, ClientConnectorError):
                 errors["base"] = "cannot_connect"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
