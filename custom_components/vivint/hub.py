@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import Any, Callable, Dict, Optional, Tuple
 
 from aiohttp import ClientResponseError
+from aiohttp.client_exceptions import ClientConnectorError
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import (
@@ -71,7 +72,7 @@ class VivintHub:
         except VivintSkyApiAuthenticationError as ex:
             _LOGGER.error("Invalid credentials")
             raise ex
-        except (VivintSkyApiError, ClientResponseError) as ex:
+        except (VivintSkyApiError, ClientResponseError, ClientConnectorError) as ex:
             _LOGGER.error("Unable to connect to the Vivint API")
             raise ex
 
