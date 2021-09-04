@@ -1,9 +1,12 @@
 """A wrapper 'hub' for the Vivint API and base entity for common attributes."""
 import logging
+import os
 from datetime import timedelta
 from typing import Any, Callable, Dict, Optional, Tuple
 
+import aiohttp
 from aiohttp import ClientResponseError
+from aiohttp.client import ClientSession
 from aiohttp.client_exceptions import ClientConnectorError
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
@@ -15,9 +18,13 @@ from vivintpy.account import Account
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.alarm_panel import AlarmPanel
 from vivintpy.entity import UPDATE
-from vivintpy.exceptions import VivintSkyApiAuthenticationError, VivintSkyApiError
+from vivintpy.exceptions import (
+    VivintSkyApiAuthenticationError,
+    VivintSkyApiError,
+    VivintSkyApiMfaRequired,
+)
 
-from .const import DOMAIN
+from .const import DEFAULT_CACHEDB, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,22 +66,55 @@ class VivintHub:
     ):
         """Login to Vivint."""
         self.logged_in = False
+
+        # Get previous session if available
+        abs_cookie_jar = aiohttp.CookieJar()
+        try:
+            abs_cookie_jar.load(self.cache_file())
+        except:
+            _LOGGER.debug("No previous session found")
+
         self.account = Account(
-            username=self._data[CONF_USERNAME], password=self._data[CONF_PASSWORD]
+            username=self._data[CONF_USERNAME],
+            password=self._data[CONF_PASSWORD],
+            client_session=ClientSession(cookie_jar=abs_cookie_jar),
         )
         try:
             await self.account.connect(
                 load_devices=load_devices,
                 subscribe_for_realtime_updates=subscribe_for_realtime_updates,
             )
-            self.logged_in = True
-            return self.logged_in
+            return self.save_session()
+        except VivintSkyApiMfaRequired as ex:
+            raise ex
         except VivintSkyApiAuthenticationError as ex:
             _LOGGER.error("Invalid credentials")
             raise ex
         except (VivintSkyApiError, ClientResponseError, ClientConnectorError) as ex:
             _LOGGER.error("Unable to connect to the Vivint API")
             raise ex
+
+    async def verify_mfa(self, code: str):
+        try:
+            await self.account.verify_mfa(code)
+            return self.save_session()
+        except Exception as ex:
+            raise ex
+
+    def cache_file(self):
+        return self.coordinator.hass.config.path(DEFAULT_CACHEDB)
+
+    def remove_cache_file(self):
+        """Remove the cached session file."""
+        os.remove(self.cache_file())
+
+    def save_session(self):
+        """Save session for reuse."""
+        self.account.vivintskyapi._VivintSkyApi__client_session.cookie_jar.save(
+            self.cache_file()
+        )
+        self.logged_in = True
+        return self.logged_in
 
 
 class VivintEntity(CoordinatorEntity):

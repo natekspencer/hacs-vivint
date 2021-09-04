@@ -6,12 +6,16 @@ from aiohttp.client_exceptions import ClientConnectorError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_ID, ATTR_DOMAIN
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.camera import DOORBELL_DING, MOTION_DETECTED, Camera
 from vivintpy.enums import CapabilityCategoryType
-from vivintpy.exceptions import VivintSkyApiAuthenticationError, VivintSkyApiError
+from vivintpy.exceptions import (
+    VivintSkyApiAuthenticationError,
+    VivintSkyApiError,
+    VivintSkyApiMfaRequired,
+)
 
 from .const import DOMAIN, EVENT_TYPE
 from .hub import VivintHub, get_device_id
@@ -46,6 +50,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     try:
         await hub.login(load_devices=True, subscribe_for_realtime_updates=True)
+    except VivintSkyApiMfaRequired as ex:
+        raise ConfigEntryAuthFailed(ex) from ex
     except VivintSkyApiAuthenticationError:
         return False
     except (VivintSkyApiError, ClientResponseError, ClientConnectorError) as ex:
@@ -102,7 +108,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         )
     )
 
-    hub = hass.data[DOMAIN][entry.entry_id]
+    hub: VivintHub = hass.data[DOMAIN][entry.entry_id]
+    hub.remove_cache_file()
     await hub.account.disconnect()
     hub.undo_listener()
 

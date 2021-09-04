@@ -11,7 +11,9 @@ RTSP_STREAM_TYPES = {
     RTSP_STREAM_EXTERNAL: "External",
 }
 
+CONF_MFA = "code"
 CONF_HD_STREAM = "hd_stream"
 CONF_RTSP_STREAM = "rtsp_stream"
 DEFAULT_HD_STREAM = True
 DEFAULT_RTSP_STREAM = RTSP_STREAM_DIRECT
+DEFAULT_CACHEDB = ".vivintpy_cache.pickle"
