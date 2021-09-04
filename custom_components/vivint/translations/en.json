@@ -6,6 +6,19 @@
           "username": "Username",
           "password": "Password"
         }
+      },
+      "mfa": {
+        "title": "Enter your MFA code for Vivint",
+        "data": {
+          "code": "MFA code"
+        }
+      },
+      "reauth_confirm": {
+        "description": "The Vivint integration needs to re-authenticate your account",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -14,7 +27,8 @@
       "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "Account is already configured"
+      "already_configured": "Account is already configured",
+      "reauth_successful": "Re-authentication was successful"
     }
   },
   "options": {
