@@ -3,19 +3,20 @@ import asyncio
 
 from aiohttp import ClientResponseError
 from aiohttp.client_exceptions import ClientConnectorError
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_DEVICE_ID, ATTR_DOMAIN
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers import device_registry
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.camera import DOORBELL_DING, MOTION_DETECTED, Camera
 from vivintpy.enums import CapabilityCategoryType
 from vivintpy.exceptions import (
     VivintSkyApiAuthenticationError,
     VivintSkyApiError,
-    VivintSkyApiMfaRequired,
+    VivintSkyApiMfaRequiredError,
 )
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_DEVICE_ID, ATTR_DOMAIN
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import device_registry
 
 from .const import DOMAIN, EVENT_TYPE
 from .hub import VivintHub, get_device_id
@@ -50,10 +51,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     try:
         await hub.login(load_devices=True, subscribe_for_realtime_updates=True)
-    except VivintSkyApiMfaRequired as ex:
+    except (VivintSkyApiMfaRequiredError, VivintSkyApiAuthenticationError) as ex:
         raise ConfigEntryAuthFailed(ex) from ex
-    except VivintSkyApiAuthenticationError:
-        return False
     except (VivintSkyApiError, ClientResponseError, ClientConnectorError) as ex:
         raise ConfigEntryNotReady from ex
 

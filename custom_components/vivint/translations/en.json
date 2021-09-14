@@ -8,13 +8,13 @@
         }
       },
       "mfa": {
-        "title": "Enter your MFA code for Vivint",
+        "title": "Enter your MFA code from Vivint",
         "data": {
           "code": "MFA code"
         }
       },
       "reauth_confirm": {
-        "description": "The Vivint integration needs to re-authenticate your account",
+        "description": "Reauthenticate Integration",
         "data": {
           "username": "Username",
           "password": "Password"

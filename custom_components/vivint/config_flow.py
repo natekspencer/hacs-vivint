@@ -11,7 +11,7 @@ from homeassistant.core import callback
 from vivintpy.exceptions import (
     VivintSkyApiAuthenticationError,
     VivintSkyApiError,
-    VivintSkyApiMfaRequired,
+    VivintSkyApiMfaRequiredError,
 )
 
 from .const import DOMAIN  # pylint:disable=unused-import
@@ -73,7 +73,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._hub = VivintHub(self.hass, user_input)
         try:
             await self._hub.login(load_devices=True)
-        except VivintSkyApiMfaRequired:
+        except VivintSkyApiMfaRequiredError:
             return await self.async_step_mfa()
         except VivintSkyApiAuthenticationError:
             errors["base"] = "invalid_auth"
