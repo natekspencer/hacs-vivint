@@ -1,19 +1,13 @@
 """A wrapper 'hub' for the Vivint API and base entity for common attributes."""
+from datetime import timedelta
 import logging
 import os
-from datetime import timedelta
 from typing import Any, Callable, Dict, Optional, Tuple
 
 import aiohttp
 from aiohttp import ClientResponseError
 from aiohttp.client import ClientSession
 from aiohttp.client_exceptions import ClientConnectorError
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-)
 from vivintpy.account import Account
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.alarm_panel import AlarmPanel
@@ -21,7 +15,14 @@ from vivintpy.entity import UPDATE
 from vivintpy.exceptions import (
     VivintSkyApiAuthenticationError,
     VivintSkyApiError,
-    VivintSkyApiMfaRequired,
+    VivintSkyApiMfaRequiredError,
+)
+
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
 )
 
 from .const import DEFAULT_CACHEDB, DOMAIN
@@ -77,6 +78,7 @@ class VivintHub:
         self.account = Account(
             username=self._data[CONF_USERNAME],
             password=self._data[CONF_PASSWORD],
+            persist_session=True,
             client_session=ClientSession(cookie_jar=abs_cookie_jar),
         )
         try:
@@ -85,7 +87,7 @@ class VivintHub:
                 subscribe_for_realtime_updates=subscribe_for_realtime_updates,
             )
             return self.save_session()
-        except VivintSkyApiMfaRequired as ex:
+        except VivintSkyApiMfaRequiredError as ex:
             raise ex
         except VivintSkyApiAuthenticationError as ex:
             _LOGGER.error("Invalid credentials")
