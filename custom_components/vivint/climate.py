@@ -2,9 +2,14 @@
 import logging
 from typing import Any, Dict, List, Optional
 
+from vivintpy.const import ThermostatAttribute
+from vivintpy.devices.thermostat import Thermostat
+from vivintpy.enums import OperatingMode
+
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
-    ATTR_HVAC_MODE,
+    ATTR_TARGET_TEMP_HIGH,
+    ATTR_TARGET_TEMP_LOW,
     FAN_AUTO,
     FAN_HIGH,
     FAN_LOW,
@@ -19,15 +24,10 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
     SUPPORT_TARGET_TEMPERATURE_RANGE,
 )
-from homeassistant.const import TEMP_CELSIUS
-from vivintpy.const import ThermostatAttribute
-from vivintpy.devices.thermostat import Thermostat
-from vivintpy.enums import OperatingMode
+from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
 
 from .const import DOMAIN
 from .hub import VivintEntity
-
-_LOGGER = logging.getLogger(__name__)
 
 # Map Vivint HVAC Mode to Home Assistant value
 VIVINT_HVAC_MODE_MAP: Dict[int, str] = {
@@ -46,6 +46,14 @@ VIVINT_HVAC_MODE_MAP: Dict[int, str] = {
     OperatingMode.ENERGY_SAVE_COOL: HVAC_MODE_COOL,
     OperatingMode.AWAY: HVAC_MODE_HEAT_COOL,
     OperatingMode.ECO: HVAC_MODE_HEAT_COOL,
+}
+
+# Map Home Assistant HVAC Mode to Vivint value
+VIVINT_HVAC_INV_MODE_MAP: Dict[int, str] = {
+    HVAC_MODE_OFF: OperatingMode.OFF,
+    HVAC_MODE_HEAT: OperatingMode.HEAT,
+    HVAC_MODE_COOL: OperatingMode.COOL,
+    HVAC_MODE_HEAT_COOL: OperatingMode.AUTO,
 }
 
 # HVAC_CURRENT_MAP: Dict[int, str] = {
@@ -107,17 +115,29 @@ class VivintClimate(VivintEntity, ClimateEntity):
     @property
     def target_temperature(self) -> Optional[float]:
         """Return the temperature we try to reach."""
-        return self.device.heat_set_point
+        if self.hvac_mode == HVAC_MODE_HEAT:
+            return self.device.heat_set_point
+        if self.hvac_mode == HVAC_MODE_COOL:
+            return self.device.cool_set_point
+        return None
 
     @property
     def target_temperature_high(self) -> Optional[float]:
         """Return the highbound target temperature we try to reach."""
-        return self.device.cool_set_point
+        return (
+            None
+            if self.hvac_mode != HVAC_MODE_HEAT_COOL
+            else self.device.cool_set_point
+        )
 
     @property
     def target_temperature_low(self) -> Optional[float]:
         """Return the lowbound target temperature we try to reach."""
-        return self.device.heat_set_point
+        return (
+            None
+            if self.hvac_mode != HVAC_MODE_HEAT_COOL
+            else self.device.heat_set_point
+        )
 
     @property
     def max_temp(self) -> int:
@@ -168,14 +188,29 @@ class VivintClimate(VivintEntity, ClimateEntity):
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
         """Set new target hvac mode."""
         await self.device.set_state(
-            **{ThermostatAttribute.OPERATING_MODE: OperatingMode.HEAT}
+            **{ThermostatAttribute.OPERATING_MODE: VIVINT_HVAC_INV_MODE_MAP[hvac_mode]}
         )
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
-        _LOGGER.debug(kwargs)
+        temp = kwargs.get(ATTR_TEMPERATURE)
+        low_temp = kwargs.get(ATTR_TARGET_TEMP_LOW)
+        high_temp = kwargs.get(ATTR_TARGET_TEMP_HIGH)
 
-        hvac_mode: Optional[str] = kwargs.get(ATTR_HVAC_MODE)
+        await self.change_target_temperature(
+            ThermostatAttribute.COOL_SET_POINT,
+            temp if self.hvac_mode == HVAC_MODE_COOL else high_temp,
+            self.device.cool_set_point,
+        )
+        await self.change_target_temperature(
+            ThermostatAttribute.HEAT_SET_POINT,
+            temp if self.hvac_mode == HVAC_MODE_HEAT else low_temp,
+            self.device.heat_set_point,
+        )
 
-        if hvac_mode is not None:
-            await self.async_set_hvac_mode(hvac_mode)
+    async def change_target_temperature(
+        self, attribute: str, target: float, current: float
+    ) -> bool:
+        """Change target temperature."""
+        if target is not None and abs(target - current) >= 0.5:
+            await self.device.set_state(**{attribute: target})

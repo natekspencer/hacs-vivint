@@ -1,10 +1,11 @@
 """Support for Vivint cameras."""
 import logging
 
-from homeassistant.components.camera import SUPPORT_STREAM, Camera
-from homeassistant.components.ffmpeg import async_get_image
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.camera import Camera as VivintCamera
+
+from homeassistant.components.camera import SUPPORT_STREAM, Camera
+from homeassistant.components.ffmpeg import async_get_image
 
 from .const import (
     CONF_HD_STREAM,
