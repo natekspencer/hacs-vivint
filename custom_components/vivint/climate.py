@@ -8,7 +8,6 @@ from vivintpy.enums import OperatingMode
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
-    ATTR_HVAC_MODE,
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
     FAN_AUTO,
@@ -25,12 +24,10 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
     SUPPORT_TARGET_TEMPERATURE_RANGE,
 )
-from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS, TEMPERATURE
+from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
 
 from .const import DOMAIN
 from .hub import VivintEntity
-
-_LOGGER = logging.getLogger(__name__)
 
 # Map Vivint HVAC Mode to Home Assistant value
 VIVINT_HVAC_MODE_MAP: Dict[int, str] = {
