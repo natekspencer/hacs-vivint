@@ -196,28 +196,24 @@ class VivintClimate(VivintEntity, ClimateEntity):
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
-        _LOGGER.debug(kwargs)
+        temp = kwargs.get(ATTR_TEMPERATURE)
+        low_temp = kwargs.get(ATTR_TARGET_TEMP_LOW)
+        high_temp = kwargs.get(ATTR_TARGET_TEMP_HIGH)
 
-        hvac_mode: Optional[str] = kwargs.get(ATTR_HVAC_MODE)
-        if hvac_mode is not None:
-            await self.async_set_hvac_mode(hvac_mode)
-
-        cool_set_point = (
-            kwargs.get(ATTR_TEMPERATURE)
-            if self.hvac_mode == HVAC_MODE_COOL
-            else kwargs.get(ATTR_TARGET_TEMP_HIGH)
+        await self.change_target_temperature(
+            ThermostatAttribute.COOL_SET_POINT,
+            temp if self.hvac_mode == HVAC_MODE_COOL else high_temp,
+            self.device.cool_set_point,
         )
-        if cool_set_point is not None:
-            await self.device.set_state(
-                **{ThermostatAttribute.COOL_SET_POINT: cool_set_point}
-            )
-
-        heat_set_point = (
-            kwargs.get(ATTR_TEMPERATURE)
-            if self.hvac_mode == HVAC_MODE_HEAT
-            else kwargs.get(ATTR_TARGET_TEMP_LOW)
+        await self.change_target_temperature(
+            ThermostatAttribute.HEAT_SET_POINT,
+            temp if self.hvac_mode == HVAC_MODE_HEAT else low_temp,
+            self.device.heat_set_point,
         )
-        if heat_set_point is not None:
-            await self.device.set_state(
-                **{ThermostatAttribute.HEAT_SET_POINT: heat_set_point}
-            )
+
+    async def change_target_temperature(
+        self, attribute: str, target: float, current: float
+    ) -> bool:
+        """Change target temperature."""
+        if target is not None and abs(target - current) >= 0.5:
+            await self.device.set_state(**{attribute: target})
