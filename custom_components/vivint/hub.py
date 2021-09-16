@@ -46,9 +46,10 @@ class VivintHub:
     ):
         """Initialize the Vivint hub."""
         self._data = data
-        self.undo_listener = undo_listener
+        self.__undo_listener = undo_listener
         self.account: Account = None
         self.logged_in = False
+        self.session: ClientSession = None
 
         async def _async_update_data():
             """Update all device states from the Vivint API."""
@@ -75,11 +76,13 @@ class VivintHub:
         except:
             _LOGGER.debug("No previous session found")
 
+        self.session = ClientSession(cookie_jar=abs_cookie_jar)
+
         self.account = Account(
             username=self._data[CONF_USERNAME],
             password=self._data[CONF_PASSWORD],
             persist_session=True,
-            client_session=ClientSession(cookie_jar=abs_cookie_jar),
+            client_session=self.session,
         )
         try:
             await self.account.connect(
@@ -95,6 +98,18 @@ class VivintHub:
         except (VivintSkyApiError, ClientResponseError, ClientConnectorError) as ex:
             _LOGGER.error("Unable to connect to the Vivint API")
             raise ex
+
+    async def disconnect(self, remove_cache: bool = False) -> None:
+        """Disconnect from Vivint, close the session and optionally remove cache."""
+        if self.account.connected:
+            await self.account.disconnect()
+        if not self.session.closed:
+            await self.session.close()
+        if remove_cache:
+            self.remove_cache_file()
+        if self.__undo_listener:
+            self.__undo_listener()
+            self.__undo_listener = None
 
     async def verify_mfa(self, code: str):
         try:

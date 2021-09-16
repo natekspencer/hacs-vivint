@@ -108,14 +108,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     )
 
     hub: VivintHub = hass.data[DOMAIN][entry.entry_id]
-    hub.remove_cache_file()
-    await hub.account.disconnect()
-    hub.undo_listener()
-
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
+    await hub.disconnect()
 
     return unload_ok
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle removal of an entry."""
+    hub: VivintHub = hass.data[DOMAIN][entry.entry_id]
+    await hub.disconnect(remove_cache=True)
+    hass.data[DOMAIN].pop(entry.entry_id)
 
 
 async def update_listener(hass, entry: ConfigEntry):
