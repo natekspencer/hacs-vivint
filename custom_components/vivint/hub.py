@@ -148,7 +148,9 @@ class VivintEntity(CoordinatorEntity):
         """Return the device information for a Vivint device."""
         return {
             "identifiers": {get_device_id(self.device)},
-            "name": self.device.name,
+            "name": self.device.name
+            if self.device.name
+            else type(self.device).__name__,
             "manufacturer": self.device.manufacturer,
             "model": self.device.model,
             "sw_version": self.device.software_version,

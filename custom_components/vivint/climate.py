@@ -1,18 +1,25 @@
 """Support for Vivint thermostats."""
-import logging
 from typing import Any, Dict, List, Optional
 
 from vivintpy.const import ThermostatAttribute
 from vivintpy.devices.thermostat import Thermostat
-from vivintpy.enums import OperatingMode
+from vivintpy.enums import (
+    CapabilityCategoryType,
+    CapabilityType,
+    FanMode,
+    OperatingMode,
+    OperatingState,
+)
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
+    CURRENT_HVAC_COOL,
+    CURRENT_HVAC_HEAT,
+    CURRENT_HVAC_IDLE,
     FAN_AUTO,
-    FAN_HIGH,
-    FAN_LOW,
+    FAN_ON,
     HVAC_MODE_AUTO,
     HVAC_MODE_COOL,
     HVAC_MODE_DRY,
@@ -27,10 +34,10 @@ from homeassistant.components.climate.const import (
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
 
 from .const import DOMAIN
-from .hub import VivintEntity
+from .hub import VivintEntity, VivintHub
 
 # Map Vivint HVAC Mode to Home Assistant value
-VIVINT_HVAC_MODE_MAP: Dict[int, str] = {
+VIVINT_HVAC_MODE_MAP: Dict[OperatingMode, str] = {
     OperatingMode.OFF: HVAC_MODE_OFF,
     OperatingMode.HEAT: HVAC_MODE_HEAT,
     OperatingMode.COOL: HVAC_MODE_COOL,
@@ -49,27 +56,46 @@ VIVINT_HVAC_MODE_MAP: Dict[int, str] = {
 }
 
 # Map Home Assistant HVAC Mode to Vivint value
-VIVINT_HVAC_INV_MODE_MAP: Dict[int, str] = {
+VIVINT_HVAC_INV_MODE_MAP: Dict[str, OperatingMode] = {
     HVAC_MODE_OFF: OperatingMode.OFF,
     HVAC_MODE_HEAT: OperatingMode.HEAT,
     HVAC_MODE_COOL: OperatingMode.COOL,
     HVAC_MODE_HEAT_COOL: OperatingMode.AUTO,
 }
 
-# HVAC_CURRENT_MAP: Dict[int, str] = {
-#     ThermostatOperatingState.IDLE: CURRENT_HVAC_IDLE,
-#     ThermostatOperatingState.PENDING_HEAT: CURRENT_HVAC_IDLE,
-#     ThermostatOperatingState.HEATING: CURRENT_HVAC_HEAT,
-#     ThermostatOperatingState.PENDING_COOL: CURRENT_HVAC_IDLE,
-#     ThermostatOperatingState.COOLING: CURRENT_HVAC_COOL,
-#     ThermostatOperatingState.FAN_ONLY: CURRENT_HVAC_FAN,
-#     ThermostatOperatingState.VENT_ECONOMIZER: CURRENT_HVAC_FAN,
-#     ThermostatOperatingState.AUX_HEATING: CURRENT_HVAC_HEAT,
-#     ThermostatOperatingState.SECOND_STAGE_HEATING: CURRENT_HVAC_HEAT,
-#     ThermostatOperatingState.SECOND_STAGE_COOLING: CURRENT_HVAC_COOL,
-#     ThermostatOperatingState.SECOND_STAGE_AUX_HEAT: CURRENT_HVAC_HEAT,
-#     ThermostatOperatingState.THIRD_STAGE_AUX_HEAT: CURRENT_HVAC_HEAT,
-# }
+VIVINT_CAPABILITY_FAN_MODE_MAP = {
+    CapabilityType.FAN15_MINUTE: FanMode.TIMER_15,
+    CapabilityType.FAN30_MINUTE: FanMode.TIMER_30,
+    CapabilityType.FAN45_MINUTE: FanMode.TIMER_45,
+    CapabilityType.FAN60_MINUTE: FanMode.TIMER_60,
+    CapabilityType.FAN120_MINUTE: FanMode.TIMER_120,
+    CapabilityType.FAN240_MINUTE: FanMode.TIMER_240,
+    CapabilityType.FAN480_MINUTE: FanMode.TIMER_480,
+    CapabilityType.FAN960_MINUTE: FanMode.TIMER_960,
+}
+
+VIVINT_FAN_MODE_MAP = {
+    FanMode.AUTO_LOW: FAN_AUTO,
+    FanMode.TIMER_15: "15 minutes",
+    FanMode.TIMER_30: "30 minutes",
+    FanMode.TIMER_45: "45 minutes",
+    FanMode.TIMER_60: "1 hour",
+    FanMode.TIMER_120: "2 hours",
+    FanMode.TIMER_240: "4 hours",
+    FanMode.TIMER_480: "8 hours",
+    FanMode.TIMER_720: "12 hours",
+    FanMode.TIMER_960: "16 hours",
+}
+
+VIVINT_FAN_INV_MODE_MAP: Dict[str, FanMode] = {
+    v: k for k, v in VIVINT_FAN_MODE_MAP.items()
+}
+
+VIVINT_HVAC_STATUS_MAP = {
+    OperatingState.IDLE: CURRENT_HVAC_IDLE,
+    OperatingState.HEATING: CURRENT_HVAC_HEAT,
+    OperatingState.COOLING: CURRENT_HVAC_COOL,
+}
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -91,6 +117,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 class VivintClimate(VivintEntity, ClimateEntity):
     """Vivint Climate."""
+
+    def __init__(self, device: Thermostat, hub: VivintHub):
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(device=device, hub=hub)
+        self._fan_modes = [FAN_AUTO, FAN_ON] + [
+            VIVINT_FAN_MODE_MAP[VIVINT_CAPABILITY_FAN_MODE_MAP[x]]
+            for k, v in device.capabilities.items()
+            if k == CapabilityCategoryType.THERMOSTAT
+            for x in v
+            if x in VIVINT_CAPABILITY_FAN_MODE_MAP
+        ]
 
     @property
     def unique_id(self):
@@ -152,14 +189,12 @@ class VivintClimate(VivintEntity, ClimateEntity):
     @property
     def hvac_mode(self) -> str:
         """Return hvac operation ie. heat, cool mode."""
-        return VIVINT_HVAC_MODE_MAP.get(
-            int(self.device.operating_mode), HVAC_MODE_HEAT_COOL
-        )
+        return VIVINT_HVAC_MODE_MAP.get(self.device.operating_mode, HVAC_MODE_HEAT_COOL)
 
-    # @property
-    # def hvac_action(self) -> Optional[str]:
-    #     """Return the current running hvac operation if supported."""
-    #     return HVAC_CURRENT_MAP.get(int(self._operating_state.value))
+    @property
+    def hvac_action(self) -> Optional[str]:
+        """Return the current running hvac operation if supported."""
+        return VIVINT_HVAC_STATUS_MAP.get(self.device.operating_mode, CURRENT_HVAC_IDLE)
 
     @property
     def hvac_modes(self) -> List[str]:
@@ -169,12 +204,12 @@ class VivintClimate(VivintEntity, ClimateEntity):
     @property
     def fan_mode(self) -> str:
         """Return the fan mode."""
-        return self.device.fan_mode.name
+        return VIVINT_FAN_MODE_MAP.get(self.device.fan_mode, FAN_ON)
 
     @property
     def fan_modes(self) -> List[str]:
         """Return the list of available fan modes."""
-        return [FAN_AUTO, FAN_LOW, FAN_HIGH]
+        return self._fan_modes
 
     @property
     def supported_features(self) -> int:
@@ -183,6 +218,16 @@ class VivintClimate(VivintEntity, ClimateEntity):
             SUPPORT_TARGET_TEMPERATURE
             | SUPPORT_TARGET_TEMPERATURE_RANGE
             | SUPPORT_FAN_MODE
+        )
+
+    async def async_set_fan_mode(self, fan_mode: str) -> None:
+        """Set new target fan mode."""
+        await self.device.set_state(
+            **{
+                ThermostatAttribute.FAN_MODE: VIVINT_FAN_INV_MODE_MAP.get(
+                    fan_mode, VIVINT_FAN_INV_MODE_MAP.get(self.fan_modes[-1])
+                )
+            }
         )
 
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:

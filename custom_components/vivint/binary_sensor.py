@@ -1,6 +1,11 @@
 """Support for Vivint binary sensors."""
 from datetime import datetime, timedelta
 
+from vivintpy.devices import VivintDevice
+from vivintpy.devices.camera import MOTION_DETECTED, Camera
+from vivintpy.devices.wireless_sensor import WirelessSensor
+from vivintpy.enums import EquipmentType, SensorType
+
 from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_COLD,
     DEVICE_CLASS_DOOR,
@@ -17,10 +22,6 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.core import CALLBACK_TYPE, callback
 from homeassistant.helpers.event import async_call_later
 from homeassistant.util.dt import utcnow
-from vivintpy.devices import VivintDevice
-from vivintpy.devices.camera import MOTION_DETECTED, Camera
-from vivintpy.devices.wireless_sensor import WirelessSensor
-from vivintpy.enums import EquipmentType, SensorType
 
 from .const import DOMAIN
 from .hub import VivintEntity, VivintHub
