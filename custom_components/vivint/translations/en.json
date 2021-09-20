@@ -36,7 +36,8 @@
       "init": {
         "data": {
           "hd_stream": "Stream camera in HD",
-          "rtsp_stream": "Select which RTSP camera stream to use"
+          "rtsp_stream": "Select which RTSP camera stream to use",
+          "rtsp_url_logging": "Log camera RTSP URLs (this contains potentially sensitive information)"
         }
       }
     }

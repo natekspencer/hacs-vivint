@@ -19,8 +19,10 @@ from .const import (
     CONF_HD_STREAM,
     CONF_MFA,
     CONF_RTSP_STREAM,
+    CONF_RTSP_URL_LOGGING,
     DEFAULT_HD_STREAM,
     DEFAULT_RTSP_STREAM,
+    DEFAULT_RTSP_URL_LOGGING,
     RTSP_STREAM_TYPES,
 )
 from .const import DOMAIN  # pylint:disable=unused-import
@@ -178,6 +180,12 @@ class OptionsFlow(config_entries.OptionsFlow):
                             CONF_RTSP_STREAM, DEFAULT_RTSP_STREAM
                         ),
                     ): vol.In(RTSP_STREAM_TYPES),
+                    vol.Optional(
+                        CONF_RTSP_URL_LOGGING,
+                        default=self.config_entry.options.get(
+                            CONF_RTSP_URL_LOGGING, DEFAULT_RTSP_URL_LOGGING
+                        ),
+                    ): bool,
                 }
             ),
         )

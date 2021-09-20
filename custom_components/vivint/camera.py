@@ -1,7 +1,6 @@
 """Support for Vivint cameras."""
 import logging
 
-from vivintpy.devices import VivintDevice
 from vivintpy.devices.camera import Camera as VivintCamera
 
 from homeassistant.components.camera import SUPPORT_STREAM, Camera
@@ -10,8 +9,10 @@ from homeassistant.components.ffmpeg import async_get_image
 from .const import (
     CONF_HD_STREAM,
     CONF_RTSP_STREAM,
+    CONF_RTSP_URL_LOGGING,
     DEFAULT_HD_STREAM,
     DEFAULT_RTSP_STREAM,
+    DEFAULT_RTSP_URL_LOGGING,
     DOMAIN,
     RTSP_STREAM_DIRECT,
     RTSP_STREAM_EXTERNAL,
@@ -28,11 +29,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     hd_stream = config_entry.options.get(CONF_HD_STREAM, DEFAULT_HD_STREAM)
     rtsp_stream = config_entry.options.get(CONF_RTSP_STREAM, DEFAULT_RTSP_STREAM)
+    rtsp_url_logging = config_entry.options.get(
+        CONF_RTSP_URL_LOGGING, DEFAULT_RTSP_URL_LOGGING
+    )
 
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
                 if type(device) is VivintCamera:
+                    if rtsp_url_logging:
+                        await log_rtsp_urls(device)
+
                     entities.append(
                         VivintCam(
                             device=device,
@@ -48,12 +55,26 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities(entities, True)
 
 
+async def log_rtsp_urls(device: VivintCamera):
+    """Logs the rtsp urls of a Vivint camera."""
+    _LOGGER.info(
+        "%s rtsp urls:\n  direct hd: %s\n  direct sd: %s\n  internal hd: %s\n  internal sd: %s\n  external hd: %s\n  external sd: %s",
+        device.name,
+        await device.get_direct_rtsp_url(hd=True),
+        await device.get_direct_rtsp_url(hd=False),
+        await device.get_rtsp_url(internal=True, hd=True),
+        await device.get_rtsp_url(internal=True, hd=False),
+        await device.get_rtsp_url(internal=False, hd=True),
+        await device.get_rtsp_url(internal=False, hd=False),
+    )
+
+
 class VivintCam(VivintEntity, Camera):
     """Vivint camera."""
 
     def __init__(
         self,
-        device: VivintDevice,
+        device: VivintCamera,
         hub: VivintHub,
         hd_stream: bool = DEFAULT_HD_STREAM,
         rtsp_stream: int = DEFAULT_RTSP_STREAM,
