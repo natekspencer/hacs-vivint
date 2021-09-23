@@ -143,15 +143,12 @@ class VivintEntity(CoordinatorEntity):
         self.device = device
         self.hub = hub
 
-    @callback
-    def _update_callback(self, _) -> None:
-        """Call from dispatcher when state changes."""
-        self.async_write_ha_state()
-
     async def async_added_to_hass(self) -> None:
         """Set up a listener for the entity."""
         await super().async_added_to_hass()
-        self.device.on(UPDATE, self._update_callback)
+        self.async_on_remove(
+            self.device.on(UPDATE, lambda _: self.async_write_ha_state())
+        )
 
     @property
     def name(self):

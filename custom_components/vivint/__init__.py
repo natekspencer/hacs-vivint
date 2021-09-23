@@ -74,18 +74,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.get_devices([Camera]):
-                device.on(
-                    MOTION_DETECTED,
-                    lambda event: async_on_device_event(
-                        MOTION_DETECTED, event["device"]
-                    ),
+                entry.async_on_unload(
+                    device.on(
+                        MOTION_DETECTED,
+                        lambda event: async_on_device_event(
+                            MOTION_DETECTED, event["device"]
+                        ),
+                    )
                 )
                 if CapabilityCategoryType.DOORBELL in device.capabilities.keys():
-                    device.on(
-                        DOORBELL_DING,
-                        lambda event: async_on_device_event(
-                            DOORBELL_DING, event["device"]
-                        ),
+                    entry.async_on_unload(
+                        device.on(
+                            DOORBELL_DING,
+                            lambda event: async_on_device_event(
+                                DOORBELL_DING, event["device"]
+                            ),
+                        )
                     )
 
     for platform in PLATFORMS:

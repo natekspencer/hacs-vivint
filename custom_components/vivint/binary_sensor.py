@@ -142,7 +142,7 @@ class VivintCameraBinarySensorEntity(VivintEntity, BinarySensorEntity):
     async def async_added_to_hass(self):
         """Register callbacks."""
         await super().async_added_to_hass()
-        self.device.on(MOTION_DETECTED, self._motion_callback)
+        self.async_on_remove(self.device.on(MOTION_DETECTED, self._motion_callback))
 
     async def async_will_remove_from_hass(self):
         """Disconnect callbacks."""
