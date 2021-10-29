@@ -17,9 +17,13 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_SAFETY,
     DEVICE_CLASS_SMOKE,
     DEVICE_CLASS_WINDOW,
+    DOMAIN as PLATFORM_DOMAIN,
     BinarySensorEntity,
 )
-from homeassistant.core import CALLBACK_TYPE, callback
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_call_later
 from homeassistant.util.dt import utcnow
 
@@ -29,7 +33,11 @@ from .hub import VivintEntity, VivintHub
 MOTION_STOPPED_SECONDS = 30
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+):
     """Set up Vivint binary sensors using config entry."""
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
@@ -37,9 +45,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
-                if type(device) is WirelessSensor:
+                if isinstance(device, WirelessSensor):
                     entities.append(VivintBinarySensorEntity(device=device, hub=hub))
-                elif type(device) is Camera:
+                elif isinstance(device, Camera):
                     entities.append(
                         VivintCameraBinarySensorEntity(device=device, hub=hub)
                     )
@@ -48,6 +56,23 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         return
 
     async_add_entities(entities, True)
+
+    @callback
+    def async_add_sensor(device: VivintDevice) -> None:
+        """Add Vivint binary sensor."""
+        entities: list[VivintBinarySensorEntity] = []
+        if isinstance(device, WirelessSensor):
+            entities.append(VivintBinarySensorEntity(device=device, hub=hub))
+
+        async_add_entities(entities)
+
+    config_entry.async_on_unload(
+        async_dispatcher_connect(
+            hass,
+            f"{DOMAIN}_{config_entry.entry_id}_add_{PLATFORM_DOMAIN}",
+            async_add_sensor,
+        )
+    )
 
 
 class VivintBinarySensorEntity(VivintEntity, BinarySensorEntity):

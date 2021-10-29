@@ -1,8 +1,10 @@
 """A wrapper 'hub' for the Vivint API and base entity for common attributes."""
+from __future__ import annotations
+
 from datetime import timedelta
 import logging
 import os
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 import aiohttp
 from aiohttp import ClientResponseError
@@ -35,7 +37,10 @@ UPDATE_INTERVAL = 300
 @callback
 def get_device_id(device: VivintDevice) -> Tuple[str, str]:
     """Get device registry identifier for device."""
-    return (DOMAIN, f"{device.panel_id}-{device.id}")
+    return (
+        DOMAIN,
+        f"{device.panel_id}-{device.parent.id if device.is_subdevice else device.id}",
+    )
 
 
 class VivintHub:
@@ -43,7 +48,7 @@ class VivintHub:
 
     def __init__(
         self, hass: HomeAssistant, data: dict, undo_listener: Optional[Callable] = None
-    ):
+    ) -> None:
         """Initialize the Vivint hub."""
         self._data = data
         self.__undo_listener = undo_listener
@@ -137,7 +142,7 @@ class VivintHub:
 class VivintEntity(CoordinatorEntity):
     """Generic Vivint entity representing common data and methods."""
 
-    def __init__(self, device: VivintDevice, hub: VivintHub):
+    def __init__(self, device: VivintDevice, hub: VivintHub) -> None:
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(hub.coordinator)
         self.device = device
@@ -156,17 +161,16 @@ class VivintEntity(CoordinatorEntity):
         return self.device.name
 
     @property
-    def device_info(self) -> Dict[str, Any]:
+    def device_info(self) -> dict[str, Any]:
         """Return the device information for a Vivint device."""
+        device = self.device.parent if self.device.is_subdevice else self.device
         return {
-            "identifiers": {get_device_id(self.device)},
-            "name": self.device.name
-            if self.device.name
-            else type(self.device).__name__,
-            "manufacturer": self.device.manufacturer,
-            "model": self.device.model,
-            "sw_version": self.device.software_version,
+            "identifiers": {get_device_id(device)},
+            "name": device.name if device.name else type(device).__name__,
+            "manufacturer": device.manufacturer,
+            "model": device.model,
+            "sw_version": device.software_version,
             "via_device": None
-            if type(self.device) is AlarmPanel
-            else (DOMAIN, self.device.alarm_panel.id),
+            if isinstance(device, AlarmPanel)
+            else (DOMAIN, device.alarm_panel.id),
         }

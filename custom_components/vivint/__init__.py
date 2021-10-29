@@ -1,10 +1,13 @@
 """The Vivint integration."""
 import asyncio
+import logging
 
 from aiohttp import ClientResponseError
 from aiohttp.client_exceptions import ClientConnectorError
 from vivintpy.devices import VivintDevice
+from vivintpy.devices.alarm_panel import DEVICE_DELETED, DEVICE_DISCOVERED
 from vivintpy.devices.camera import DOORBELL_DING, MOTION_DETECTED, Camera
+from vivintpy.devices.wireless_sensor import WirelessSensor
 from vivintpy.enums import CapabilityCategoryType
 from vivintpy.exceptions import (
     VivintSkyApiAuthenticationError,
@@ -17,9 +20,12 @@ from homeassistant.const import ATTR_DEVICE_ID, ATTR_DOMAIN
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .const import DOMAIN, EVENT_TYPE
 from .hub import VivintHub, get_device_id
+
+_LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [
     "alarm_control_panel",
@@ -59,6 +65,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     dev_reg = await device_registry.async_get_registry(hass)
 
     @callback
+    def async_on_device_discovered(device: VivintDevice) -> None:
+        if getattr(device, "battery_level", None) is not None:
+            async_dispatcher_send(hass, f"{DOMAIN}_{entry.entry_id}_add_sensor", device)
+        if isinstance(device, WirelessSensor):
+            async_dispatcher_send(
+                hass, f"{DOMAIN}_{entry.entry_id}_add_binary_sensor", device
+            )
+
+    @callback
+    def async_on_device_deleted(device: VivintDevice) -> None:
+        _LOGGER.debug("Device deleted: %s", device)
+        device = dev_reg.async_get_device({get_device_id(device)})
+        if device:
+            dev_reg.async_remove_device(device.id)
+
+    @callback
     def async_on_device_event(event_type: str, viv_device: VivintDevice) -> None:
         """Relay Vivint device event to hass."""
         device = dev_reg.async_get_device({get_device_id(viv_device)})
@@ -73,6 +95,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
+            entry.async_on_unload(
+                alarm_panel.on(
+                    DEVICE_DISCOVERED,
+                    lambda event: async_on_device_discovered(event["device"]),
+                )
+            )
+            entry.async_on_unload(
+                alarm_panel.on(
+                    DEVICE_DELETED,
+                    lambda event: async_on_device_deleted(event["device"]),
+                )
+            )
             for device in alarm_panel.get_devices([Camera]):
                 entry.async_on_unload(
                     device.on(
@@ -96,6 +130,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, platform)
         )
+
+    # Check for devices that no longer exist and remove them
+    stored_devices = device_registry.async_entries_for_config_entry(
+        dev_reg, entry.entry_id
+    )
+    alarm_panels = [
+        alarm_panel
+        for system in hub.account.systems
+        for alarm_panel in system.alarm_panels
+    ]
+    all_devices = alarm_panels + [
+        device for alarm_panel in alarm_panels for device in alarm_panel.devices
+    ]
+    known_devices = [
+        dev_reg.async_get_device({get_device_id(device)}) for device in all_devices
+    ]
+
+    # Devices that are in the device registry that are not known by the hub can be removed
+    for device in stored_devices:
+        if device not in known_devices:
+            dev_reg.async_remove_device(device.id)
 
     return True
 
