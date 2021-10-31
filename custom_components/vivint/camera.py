@@ -1,4 +1,6 @@
 """Support for Vivint cameras."""
+from __future__ import annotations
+
 import logging
 
 from vivintpy.devices.camera import Camera as VivintCamera
@@ -109,13 +111,18 @@ class VivintCam(VivintEntity, Camera):
             )
         return self.__stream_source
 
-    async def async_camera_image(self):
+    async def async_camera_image(
+        self, width: int | None = None, height: int | None = None
+    ) -> bytes | None:
         """Return a frame from the camera stream."""
         try:
             self.__last_image = await async_get_image(
-                self.hass, await self.stream_source()
+                hass=self.hass,
+                input_source=await self.stream_source(),
+                width=width,
+                height=height,
             )
         except:
             _LOGGER.debug(f"Could not retrieve latest image for {self.name}")
-        finally:
-            return self.__last_image
+
+        return self.__last_image
