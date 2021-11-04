@@ -3,7 +3,11 @@ from vivintpy.devices import VivintDevice
 
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import DEVICE_CLASS_BATTERY, PERCENTAGE
+from homeassistant.const import (
+    DEVICE_CLASS_BATTERY,
+    ENTITY_CATEGORY_DIAGNOSTIC,
+    PERCENTAGE,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -28,7 +32,7 @@ async def async_setup_entry(
                     not device.is_subdevice
                     and getattr(device, "battery_level", None) is not None
                 ):
-                    entities.append(VivintSensorEntity(device=device, hub=hub))
+                    entities.append(VivintBatterySensorEntity(device=device, hub=hub))
 
     if not entities:
         return
@@ -38,12 +42,12 @@ async def async_setup_entry(
     @callback
     def async_add_sensor(device: VivintDevice) -> None:
         """Add Vivint sensor."""
-        entities: list[VivintSensorEntity] = []
+        entities: list[VivintBatterySensorEntity] = []
         if (
             not device.is_subdevice
             and getattr(device, "battery_level", None) is not None
         ):
-            entities.append(VivintSensorEntity(device=device, hub=hub))
+            entities.append(VivintBatterySensorEntity(device=device, hub=hub))
 
         async_add_entities(entities)
 
@@ -56,8 +60,12 @@ async def async_setup_entry(
     )
 
 
-class VivintSensorEntity(VivintEntity, SensorEntity):
-    """Vivint Sensor."""
+class VivintBatterySensorEntity(VivintEntity, SensorEntity):
+    """Vivint Battery Sensor."""
+
+    _attr_device_class = DEVICE_CLASS_BATTERY
+    _attr_entity_category = ENTITY_CATEGORY_DIAGNOSTIC
+    _attr_unit_of_measurement = PERCENTAGE
 
     @property
     def name(self):
@@ -73,13 +81,3 @@ class VivintSensorEntity(VivintEntity, SensorEntity):
     def state(self):
         """Return the state."""
         return self.device.battery_level
-
-    @property
-    def unit_of_measurement(self):
-        """Return unit of measurement."""
-        return PERCENTAGE
-
-    @property
-    def device_class(self):
-        """Return the class of this device."""
-        return DEVICE_CLASS_BATTERY
