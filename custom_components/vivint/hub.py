@@ -22,6 +22,7 @@ from vivintpy.exceptions import (
 
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -161,16 +162,17 @@ class VivintEntity(CoordinatorEntity):
         return self.device.name
 
     @property
-    def device_info(self) -> dict[str, Any]:
+    def device_info(self) -> DeviceInfo:
         """Return the device information for a Vivint device."""
         device = self.device.parent if self.device.is_subdevice else self.device
-        return {
-            "identifiers": {get_device_id(device)},
-            "name": device.name if device.name else type(device).__name__,
-            "manufacturer": device.manufacturer,
-            "model": device.model,
-            "sw_version": device.software_version,
-            "via_device": None
+        return DeviceInfo(
+            default_manufacturer="Vivint",
+            identifiers={get_device_id(device)},
+            name=device.name if device.name else type(device).__name__,
+            manufacturer=device.manufacturer,
+            model=device.model,
+            sw_version=device.software_version,
+            via_device=None
             if isinstance(device, AlarmPanel)
             else (DOMAIN, device.alarm_panel.id),
-        }
+        )
