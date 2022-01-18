@@ -126,10 +126,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                         )
                     )
 
-    for platform in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, platform)
-        )
+    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
 
     # Check for devices that no longer exist and remove them
     stored_devices = device_registry.async_entries_for_config_entry(
@@ -157,14 +154,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload config entry."""
-    unload_ok = all(
-        await asyncio.gather(
-            *[
-                hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in PLATFORMS
-            ]
-        )
-    )
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     hub: VivintHub = hass.data[DOMAIN][entry.entry_id]
     await hub.disconnect()
