@@ -13,5 +13,5 @@
     "switch"
   ],
   "iot_class": "Cloud Polling",
-  "homeassistant": "2021.11.0"
+  "homeassistant": "2021.12.0"
 }
