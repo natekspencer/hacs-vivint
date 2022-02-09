@@ -7,18 +7,10 @@ from vivintpy.devices.wireless_sensor import WirelessSensor
 from vivintpy.enums import EquipmentType, SensorType
 
 from homeassistant.components.binary_sensor import (
-    DEVICE_CLASS_COLD,
-    DEVICE_CLASS_DOOR,
-    DEVICE_CLASS_GARAGE_DOOR,
-    DEVICE_CLASS_GAS,
-    DEVICE_CLASS_HEAT,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_MOTION,
-    DEVICE_CLASS_SAFETY,
-    DEVICE_CLASS_SMOKE,
-    DEVICE_CLASS_WINDOW,
     DOMAIN as PLATFORM_DOMAIN,
+    BinarySensorDeviceClass,
     BinarySensorEntity,
+    BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
@@ -31,6 +23,10 @@ from .const import DOMAIN
 from .hub import VivintEntity, VivintHub
 
 MOTION_STOPPED_SECONDS = 30
+
+ENTITY_DESCRIPTION_MOTION = BinarySensorEntityDescription(
+    "motion", device_class=BinarySensorDeviceClass.MOTION
+)
 
 
 async def async_setup_entry(
@@ -49,7 +45,11 @@ async def async_setup_entry(
                     entities.append(VivintBinarySensorEntity(device=device, hub=hub))
                 elif isinstance(device, Camera):
                     entities.append(
-                        VivintCameraBinarySensorEntity(device=device, hub=hub)
+                        VivintCameraBinarySensorEntity(
+                            device=device,
+                            hub=hub,
+                            entity_description=ENTITY_DESCRIPTION_MOTION,
+                        )
                     )
 
     if not entities:
@@ -89,56 +89,62 @@ class VivintBinarySensorEntity(VivintEntity, BinarySensorEntity):
         return self.device.is_on
 
     @property
-    def device_class(self):
+    def device_class(self) -> BinarySensorDeviceClass:
         """Return the class of this device."""
         equipment_type = self.device.equipment_type
 
         if equipment_type == EquipmentType.MOTION:
-            return DEVICE_CLASS_MOTION
+            return BinarySensorDeviceClass.MOTION
 
         elif equipment_type == EquipmentType.FREEZE:
-            return DEVICE_CLASS_COLD
+            return BinarySensorDeviceClass.COLD
 
         elif equipment_type == EquipmentType.WATER:
-            return DEVICE_CLASS_MOISTURE
+            return BinarySensorDeviceClass.MOISTURE
 
         elif equipment_type == EquipmentType.TEMPERATURE:
-            return DEVICE_CLASS_HEAT
+            return BinarySensorDeviceClass.HEAT
 
         elif equipment_type == EquipmentType.CONTACT:
             sensor_type = self.device.sensor_type
 
             if sensor_type == SensorType.EXIT_ENTRY_1:
                 return (
-                    DEVICE_CLASS_GARAGE_DOOR
+                    BinarySensorDeviceClass.GARAGE_DOOR
                     if "TILT" in self.device.equipment_code.name
-                    else DEVICE_CLASS_DOOR
+                    else BinarySensorDeviceClass.DOOR
                 )
 
             elif sensor_type == SensorType.PERIMETER:
                 return (
-                    DEVICE_CLASS_SAFETY
+                    BinarySensorDeviceClass.SAFETY
                     if "GLASS_BREAK" in self.device.equipment_code.name
-                    else DEVICE_CLASS_WINDOW
+                    else BinarySensorDeviceClass.WINDOW
                 )
 
             elif sensor_type in [SensorType.FIRE, SensorType.FIRE_WITH_VERIFICATION]:
-                return DEVICE_CLASS_SMOKE
+                return BinarySensorDeviceClass.SMOKE
 
             elif sensor_type == SensorType.CARBON_MONOXIDE:
-                return DEVICE_CLASS_GAS
+                return BinarySensorDeviceClass.GAS
 
         else:
-            return DEVICE_CLASS_SAFETY
+            return BinarySensorDeviceClass.SAFETY
 
 
 class VivintCameraBinarySensorEntity(VivintEntity, BinarySensorEntity):
     """Vivint Camera Binary Sensor."""
 
-    def __init__(self, device: VivintDevice, hub: VivintHub):
+    def __init__(
+        self,
+        device: VivintDevice,
+        hub: VivintHub,
+        entity_description: BinarySensorEntityDescription,
+    ):
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(device=device, hub=hub)
-        self._last_motion_event: datetime = None
+        self.entity_description = entity_description
+        self._last_motion_event: datetime | None = None
         self._motion_stopped_callback: CALLBACK_TYPE = None
 
     @property
@@ -155,14 +161,9 @@ class VivintCameraBinarySensorEntity(VivintEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return true if the binary sensor is on."""
         return (
-            self._last_motion_event
+            self._last_motion_event is not None
             and self._last_motion_event >= utcnow() - timedelta(seconds=30)
         )
-
-    @property
-    def device_class(self):
-        """Return the class of this device."""
-        return DEVICE_CLASS_MOTION
 
     async def async_added_to_hass(self):
         """Register callbacks."""
