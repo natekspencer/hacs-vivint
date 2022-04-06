@@ -1,7 +1,11 @@
 """Provides device triggers for Vivint."""
-from typing import List, Optional
+from __future__ import annotations
 
+from vivintpy.devices import VivintDevice
+from vivintpy.devices.camera import DOORBELL_DING, MOTION_DETECTED, Camera
+from vivintpy.enums import CapabilityCategoryType
 import voluptuous as vol
+
 from homeassistant.components.automation import AutomationActionType
 from homeassistant.components.device_automation import DEVICE_TRIGGER_BASE_SCHEMA
 from homeassistant.components.homeassistant.triggers import event as event_trigger
@@ -9,9 +13,6 @@ from homeassistant.const import CONF_DEVICE_ID, CONF_DOMAIN, CONF_PLATFORM, CONF
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant
 from homeassistant.helpers.device_registry import DeviceRegistry
 from homeassistant.helpers.typing import ConfigType
-from vivintpy.devices import VivintDevice
-from vivintpy.devices.camera import DOORBELL_DING, MOTION_DETECTED, Camera
-from vivintpy.enums import CapabilityCategoryType
 
 from .const import DOMAIN, EVENT_TYPE
 from .hub import VivintHub
@@ -27,7 +28,7 @@ TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
 
 async def async_get_vivint_device(
     hass: HomeAssistant, device_id: str
-) -> Optional[VivintDevice]:
+) -> VivintDevice | None:
     """Get a Vivint device for the given device registry id."""
     device_registry: DeviceRegistry = (
         await hass.helpers.device_registry.async_get_registry()
@@ -47,7 +48,7 @@ async def async_get_vivint_device(
     return None
 
 
-async def async_get_triggers(hass: HomeAssistant, device_id: str) -> List[dict]:
+async def async_get_triggers(hass: HomeAssistant, device_id: str) -> list[dict]:
     """Return a list of triggers."""
     device = await async_get_vivint_device(hass, device_id)
 

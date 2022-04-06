@@ -1,10 +1,10 @@
 """A wrapper 'hub' for the Vivint API and base entity for common attributes."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import timedelta
 import logging
 import os
-from typing import Any, Callable, Optional, Tuple
 
 import aiohttp
 from aiohttp import ClientResponseError
@@ -36,7 +36,7 @@ UPDATE_INTERVAL = 300
 
 
 @callback
-def get_device_id(device: VivintDevice) -> Tuple[str, str]:
+def get_device_id(device: VivintDevice) -> tuple[str, str]:
     """Get device registry identifier for device."""
     return (
         DOMAIN,
@@ -48,7 +48,7 @@ class VivintHub:
     """A Vivint hub wrapper class."""
 
     def __init__(
-        self, hass: HomeAssistant, data: dict, undo_listener: Optional[Callable] = None
+        self, hass: HomeAssistant, data: dict, undo_listener: Callable | None = None
     ) -> None:
         """Initialize the Vivint hub."""
         self._data = data
@@ -57,7 +57,7 @@ class VivintHub:
         self.logged_in = False
         self.session: ClientSession = None
 
-        async def _async_update_data():
+        async def _async_update_data() -> None:
             """Update all device states from the Vivint API."""
             return await self.account.refresh()
 
@@ -71,7 +71,7 @@ class VivintHub:
 
     async def login(
         self, load_devices: bool = False, subscribe_for_realtime_updates: bool = False
-    ):
+    ) -> bool:
         """Login to Vivint."""
         self.logged_in = False
 
@@ -117,21 +117,23 @@ class VivintHub:
             self.__undo_listener()
             self.__undo_listener = None
 
-    async def verify_mfa(self, code: str):
+    async def verify_mfa(self, code: str) -> bool:
+        """Verify MFA."""
         try:
             await self.account.verify_mfa(code)
             return self.save_session()
         except Exception as ex:
             raise ex
 
-    def cache_file(self):
+    def cache_file(self) -> str:
+        """Get cache file."""
         return self.coordinator.hass.config.path(DEFAULT_CACHEDB)
 
-    def remove_cache_file(self):
+    def remove_cache_file(self) -> None:
         """Remove the cached session file."""
         os.remove(self.cache_file())
 
-    def save_session(self):
+    def save_session(self) -> bool:
         """Save session for reuse."""
         self.account.vivintskyapi._VivintSkyApi__client_session.cookie_jar.save(
             self.cache_file()
@@ -157,7 +159,7 @@ class VivintEntity(CoordinatorEntity):
         )
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of this entity."""
         return self.device.name
 

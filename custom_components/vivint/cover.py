@@ -1,17 +1,27 @@
 """Support for Vivint garage doors."""
+from typing import Any
+
+from vivintpy.devices.garage_door import GarageDoor
+
 from homeassistant.components.cover import (
-    DEVICE_CLASS_GARAGE,
     SUPPORT_CLOSE,
     SUPPORT_OPEN,
+    CoverDeviceClass,
     CoverEntity,
 )
-from vivintpy.devices.garage_door import GarageDoor
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .hub import VivintEntity
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up Vivint garage doors using config entry."""
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
@@ -19,7 +29,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
-                if type(device) is GarageDoor:
+                if isinstance(device, GarageDoor):
                     entities.append(VivintGarageDoorEntity(device=device, hub=hub))
 
     if not entities:
@@ -30,6 +40,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 class VivintGarageDoorEntity(VivintEntity, CoverEntity):
     """Vivint Garage Door."""
+
+    _attr_device_class = CoverDeviceClass.GARAGE
+    _attr_supported_features = SUPPORT_CLOSE | SUPPORT_OPEN
 
     @property
     def is_opening(self) -> bool:
@@ -47,24 +60,14 @@ class VivintGarageDoorEntity(VivintEntity, CoverEntity):
         return self.device.is_closed
 
     @property
-    def device_class(self):
-        """Return the list of supported features."""
-        return DEVICE_CLASS_GARAGE
-
-    @property
-    def supported_features(self) -> int:
-        """Return the list of supported features."""
-        return SUPPORT_CLOSE | SUPPORT_OPEN
-
-    @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{self.device.alarm_panel.id}-{self.device.id}"
 
-    async def async_close_cover(self, **kwargs):
+    async def async_close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
         await self.device.close()
 
-    async def async_open_cover(self, **kwargs):
+    async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
         await self.device.open()

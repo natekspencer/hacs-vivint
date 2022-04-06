@@ -1,16 +1,26 @@
 """Support for Vivint lights."""
+from typing import Any
+
+from vivintpy.devices.switch import MultilevelSwitch
+
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     SUPPORT_BRIGHTNESS,
     LightEntity,
 )
-from vivintpy.devices.switch import MultilevelSwitch
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .hub import VivintEntity
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up Vivint lights using config entry."""
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
@@ -18,7 +28,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
-                if type(device) is MultilevelSwitch:
+                if isinstance(device, MultilevelSwitch):
                     entities.append(VivintLightEntity(device=device, hub=hub))
 
     if not entities:
@@ -30,13 +40,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class VivintLightEntity(VivintEntity, LightEntity):
     """Vivint Light."""
 
+    _attr_supported_features = SUPPORT_BRIGHTNESS
+
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return True if the light is on."""
         return self.device.is_on
 
     @property
-    def brightness(self):
+    def brightness(self) -> int:
         """Return the brightness of the light between 0..255.
 
         Vivint multilevel switches use a range of 0..100 to control brightness.
@@ -46,16 +58,11 @@ class VivintLightEntity(VivintEntity, LightEntity):
         return 0
 
     @property
-    def supported_features(self):
-        """Flag supported features."""
-        return SUPPORT_BRIGHTNESS
-
-    @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{self.device.alarm_panel.id}-{self.device.id}"
 
-    async def async_turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the light."""
         brightness = kwargs.get(ATTR_BRIGHTNESS)
 
@@ -67,7 +74,7 @@ class VivintLightEntity(VivintEntity, LightEntity):
             level = byte_to_vivint_level(brightness)
             await self.device.set_level(level)
 
-    async def async_turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the light."""
         await self.device.turn_off()
 

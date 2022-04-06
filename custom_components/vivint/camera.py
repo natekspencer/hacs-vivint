@@ -7,6 +7,9 @@ from vivintpy.devices.camera import Camera as VivintCamera
 
 from homeassistant.components.camera import SUPPORT_STREAM, Camera
 from homeassistant.components.ffmpeg import async_get_image
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     CONF_HD_STREAM,
@@ -24,7 +27,11 @@ from .hub import VivintEntity, VivintHub
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up Vivint cameras using config entry."""
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
@@ -57,7 +64,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities(entities, True)
 
 
-async def log_rtsp_urls(device: VivintCamera):
+async def log_rtsp_urls(device: VivintCamera) -> None:
     """Logs the rtsp urls of a Vivint camera."""
     _LOGGER.info(
         "%s rtsp urls:\n  direct hd: %s\n  direct sd: %s\n  internal hd: %s\n  internal sd: %s\n  external hd: %s\n  external sd: %s",
@@ -74,13 +81,16 @@ async def log_rtsp_urls(device: VivintCamera):
 class VivintCam(VivintEntity, Camera):
     """Vivint camera."""
 
+    _attr_supported_features = SUPPORT_STREAM
+
     def __init__(
         self,
         device: VivintCamera,
         hub: VivintHub,
         hd_stream: bool = DEFAULT_HD_STREAM,
         rtsp_stream: int = DEFAULT_RTSP_STREAM,
-    ):
+    ) -> None:
+        """Initialize a Vivint camera."""
         super().__init__(device=device, hub=hub)
         Camera.__init__(self)
 
@@ -90,16 +100,11 @@ class VivintCam(VivintEntity, Camera):
         self.__last_image = None
 
     @property
-    def supported_features(self):
-        """Return supported features for this camera."""
-        return SUPPORT_STREAM
-
-    @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{self.device.alarm_panel.id}-{self.device.id}"
 
-    async def stream_source(self):
+    async def stream_source(self) -> str | None:
         """Return the source of the stream."""
         if not self.__stream_source:
             self.__stream_source = (
@@ -122,7 +127,7 @@ class VivintCam(VivintEntity, Camera):
                 width=width,
                 height=height,
             )
-        except:
+        except:  # pylint:disable=bare-except
             _LOGGER.debug(f"Could not retrieve latest image for {self.name}")
 
         return self.__last_image
