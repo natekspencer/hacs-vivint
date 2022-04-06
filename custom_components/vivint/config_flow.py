@@ -1,6 +1,8 @@
 """Config flow for Vivint integration."""
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from aiohttp import ClientResponseError
 from aiohttp.client_exceptions import ClientConnectorError
@@ -14,6 +16,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     CONF_HD_STREAM,
@@ -47,13 +50,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize a config flow."""
         self._hub: VivintHub = None
 
-    async def async_create_entry(self):
+    async def _async_create_entry(self) -> FlowResult:
         """Create the config entry."""
         existing_entry = await self.async_set_unique_id(DOMAIN)
 
+        # pylint: disable=protected-access
         config_data = {
             CONF_USERNAME: self._hub._data[CONF_USERNAME],
             CONF_PASSWORD: self._hub._data[CONF_PASSWORD],
@@ -67,11 +72,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="reauth_successful")
 
         await self._hub.disconnect()
-        return super().async_create_entry(
+        return self.async_create_entry(
             title=config_data[CONF_USERNAME], data=config_data
         )
 
-    async def async_vivint_login(self, step_id, user_input, schema):
+    async def async_vivint_login(
+        self, step_id, user_input: dict[str, Any] | None, schema: vol.Schema
+    ) -> FlowResult:
+        """Attempt a login with Vivint."""
         errors = {}
 
         self._hub = VivintHub(self.hass, user_input)
@@ -88,11 +96,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors["base"] = "unknown"
 
         if not errors:
-            return await self.async_create_entry()
+            return await self._async_create_entry()
 
         return self.async_show_form(step_id=step_id, data_schema=schema, errors=errors)
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Handle the initial step."""
         errors = {}
 
@@ -109,14 +119,17 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
-    async def async_step_mfa(self, user_input=None):
+    async def async_step_mfa(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Handle a multi-factor authentication (MFA) flow."""
+        super().async_step_user()
         if user_input is None:
             return self.async_show_form(step_id="mfa", data_schema=STEP_MFA_DATA_SCHEMA)
 
         try:
             await self._hub.verify_mfa(user_input[CONF_MFA])
-        except Exception as ex:
+        except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.error(ex)
             return self.async_show_form(
                 step_id="mfa",
@@ -124,13 +137,17 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors={"base": "unknown"},
             )
 
-        return await self.async_create_entry()
+        return await self._async_create_entry()
 
-    async def async_step_reauth(self, user_input=None):
+    async def async_step_reauth(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Perform reauth upon an API authentication error."""
         return await self.async_step_reauth_confirm()
 
-    async def async_step_reauth_confirm(self, user_input=None):
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Dialog that informs the user that reauth is required."""
         if user_input is None:
             return self.async_show_form(
@@ -145,7 +162,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(config_entry) -> OptionsFlow:
         """Get the options flow for this handler."""
         return OptionsFlow(config_entry)
 
@@ -153,13 +170,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class OptionsFlow(config_entries.OptionsFlow):
     """Handle Vivint options."""
 
-    def __init__(self, config_entry):
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize Vivint options flow."""
         self.config_entry = config_entry
 
     async def async_step_init(
-        self, user_input: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Manage Vivint options."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)

@@ -1,16 +1,18 @@
 """Support for Vivint sensors."""
 from vivintpy.devices import VivintDevice
 
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    DEVICE_CLASS_BATTERY,
-    ENTITY_CATEGORY_DIAGNOSTIC,
-    PERCENTAGE,
+from homeassistant.components.sensor import (
+    DOMAIN as SENSOR_DOMAIN,
+    SensorDeviceClass,
+    SensorEntity,
 )
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import StateType
 
 from .const import DOMAIN
 from .hub import VivintEntity, VivintHub
@@ -20,7 +22,7 @@ async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-):
+) -> None:
     """Set up Vivint sensors using config entry."""
     entities = []
     hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
@@ -63,21 +65,21 @@ async def async_setup_entry(
 class VivintBatterySensorEntity(VivintEntity, SensorEntity):
     """Vivint Battery Sensor."""
 
-    _attr_device_class = DEVICE_CLASS_BATTERY
-    _attr_entity_category = ENTITY_CATEGORY_DIAGNOSTIC
+    _attr_device_class = SensorDeviceClass.BATTERY
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_unit_of_measurement = PERCENTAGE
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of this entity."""
         return f"{self.device.name} Battery Level"
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{self.device.alarm_panel.id}-{self.device.id}"
 
     @property
-    def state(self):
-        """Return the state."""
+    def native_value(self) -> StateType:
+        """Return the value reported by the sensor."""
         return self.device.battery_level

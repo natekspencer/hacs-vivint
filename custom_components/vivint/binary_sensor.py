@@ -33,7 +33,7 @@ async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-):
+) -> None:
     """Set up Vivint binary sensors using config entry."""
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
@@ -79,7 +79,7 @@ class VivintBinarySensorEntity(VivintEntity, BinarySensorEntity):
     """Vivint Binary Sensor."""
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{self.device.alarm_panel.id}-{self.device.id}"
 
@@ -140,7 +140,7 @@ class VivintCameraBinarySensorEntity(VivintEntity, BinarySensorEntity):
         device: VivintDevice,
         hub: VivintHub,
         entity_description: BinarySensorEntityDescription,
-    ):
+    ) -> None:
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(device=device, hub=hub)
         self.entity_description = entity_description
@@ -148,12 +148,12 @@ class VivintCameraBinarySensorEntity(VivintEntity, BinarySensorEntity):
         self._motion_stopped_callback: CALLBACK_TYPE = None
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of this entity."""
         return f"{self.device.name} Motion"
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{self.device.alarm_panel.id}-{self.device.id}"
 
@@ -165,18 +165,18 @@ class VivintCameraBinarySensorEntity(VivintEntity, BinarySensorEntity):
             and self._last_motion_event >= utcnow() - timedelta(seconds=30)
         )
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Register callbacks."""
         await super().async_added_to_hass()
         self.async_on_remove(self.device.on(MOTION_DETECTED, self._motion_callback))
 
-    async def async_will_remove_from_hass(self):
+    async def async_will_remove_from_hass(self) -> None:
         """Disconnect callbacks."""
         await super().async_will_remove_from_hass()
         self.async_cancel_motion_stopped_callback()
 
     @callback
-    def _motion_callback(self, _):
+    def _motion_callback(self, _) -> None:
         """Call motion method."""
         self.async_cancel_motion_stopped_callback()
 
@@ -194,7 +194,7 @@ class VivintCameraBinarySensorEntity(VivintEntity, BinarySensorEntity):
         self.async_write_ha_state()
 
     @callback
-    def async_cancel_motion_stopped_callback(self):
+    def async_cancel_motion_stopped_callback(self) -> None:
         """Clear the motion stopped callback if it has not already fired."""
         if self._motion_stopped_callback is not None:
             self._motion_stopped_callback()

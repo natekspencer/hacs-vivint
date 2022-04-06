@@ -1,5 +1,7 @@
 """Support for Vivint thermostats."""
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+
+from typing import Any
 
 from vivintpy.const import ThermostatAttribute
 from vivintpy.devices.thermostat import Thermostat
@@ -31,13 +33,16 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
     SUPPORT_TARGET_TEMPERATURE_RANGE,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .hub import VivintEntity, VivintHub
 
 # Map Vivint HVAC Mode to Home Assistant value
-VIVINT_HVAC_MODE_MAP: Dict[OperatingMode, str] = {
+VIVINT_HVAC_MODE_MAP: dict[OperatingMode, str] = {
     OperatingMode.OFF: HVAC_MODE_OFF,
     OperatingMode.HEAT: HVAC_MODE_HEAT,
     OperatingMode.COOL: HVAC_MODE_COOL,
@@ -56,7 +61,7 @@ VIVINT_HVAC_MODE_MAP: Dict[OperatingMode, str] = {
 }
 
 # Map Home Assistant HVAC Mode to Vivint value
-VIVINT_HVAC_INV_MODE_MAP: Dict[str, OperatingMode] = {
+VIVINT_HVAC_INV_MODE_MAP: dict[str, OperatingMode] = {
     HVAC_MODE_OFF: OperatingMode.OFF,
     HVAC_MODE_HEAT: OperatingMode.HEAT,
     HVAC_MODE_COOL: OperatingMode.COOL,
@@ -87,7 +92,7 @@ VIVINT_FAN_MODE_MAP = {
     FanMode.TIMER_960: "16 hours",
 }
 
-VIVINT_FAN_INV_MODE_MAP: Dict[str, FanMode] = {
+VIVINT_FAN_INV_MODE_MAP: dict[str, FanMode] = {
     v: k for k, v in VIVINT_FAN_MODE_MAP.items()
 }
 
@@ -98,7 +103,11 @@ VIVINT_HVAC_STATUS_MAP = {
 }
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up Vivint climate using config entry."""
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
@@ -118,7 +127,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class VivintClimate(VivintEntity, ClimateEntity):
     """Vivint Climate."""
 
-    def __init__(self, device: Thermostat, hub: VivintHub):
+    _attr_temperature_unit = TEMP_CELSIUS
+    _attr_supported_features = (
+        SUPPORT_TARGET_TEMPERATURE | SUPPORT_TARGET_TEMPERATURE_RANGE | SUPPORT_FAN_MODE
+    )
+
+    def __init__(self, device: Thermostat, hub: VivintHub) -> None:
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(device=device, hub=hub)
         self._fan_modes = [FAN_AUTO, FAN_ON] + [
@@ -130,27 +144,22 @@ class VivintClimate(VivintEntity, ClimateEntity):
         ]
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{self.device.alarm_panel.id}-{self.device.id}"
 
     @property
-    def temperature_unit(self) -> str:
-        """Return the unit of measurement used by the platform."""
-        return TEMP_CELSIUS
-
-    @property
-    def current_temperature(self) -> Optional[float]:
+    def current_temperature(self) -> float | None:
         """Return the current temperature."""
         return self.device.temperature
 
     @property
-    def current_humidity(self) -> Optional[int]:
+    def current_humidity(self) -> int | None:
         """Return the current humidity level."""
         return self.device.humidity
 
     @property
-    def target_temperature(self) -> Optional[float]:
+    def target_temperature(self) -> float | None:
         """Return the temperature we try to reach."""
         if self.hvac_mode == HVAC_MODE_HEAT:
             return self.device.heat_set_point
@@ -159,7 +168,7 @@ class VivintClimate(VivintEntity, ClimateEntity):
         return None
 
     @property
-    def target_temperature_high(self) -> Optional[float]:
+    def target_temperature_high(self) -> float | None:
         """Return the highbound target temperature we try to reach."""
         return (
             None
@@ -168,7 +177,7 @@ class VivintClimate(VivintEntity, ClimateEntity):
         )
 
     @property
-    def target_temperature_low(self) -> Optional[float]:
+    def target_temperature_low(self) -> float | None:
         """Return the lowbound target temperature we try to reach."""
         return (
             None
@@ -192,12 +201,12 @@ class VivintClimate(VivintEntity, ClimateEntity):
         return VIVINT_HVAC_MODE_MAP.get(self.device.operating_mode, HVAC_MODE_HEAT_COOL)
 
     @property
-    def hvac_action(self) -> Optional[str]:
+    def hvac_action(self) -> str | None:
         """Return the current running hvac operation if supported."""
         return VIVINT_HVAC_STATUS_MAP.get(self.device.operating_mode, CURRENT_HVAC_IDLE)
 
     @property
-    def hvac_modes(self) -> List[str]:
+    def hvac_modes(self) -> list[str]:
         """Return the list of available hvac operation modes."""
         return [HVAC_MODE_COOL, HVAC_MODE_HEAT, HVAC_MODE_HEAT_COOL, HVAC_MODE_OFF]
 
@@ -207,18 +216,9 @@ class VivintClimate(VivintEntity, ClimateEntity):
         return VIVINT_FAN_MODE_MAP.get(self.device.fan_mode, FAN_ON)
 
     @property
-    def fan_modes(self) -> List[str]:
+    def fan_modes(self) -> list[str]:
         """Return the list of available fan modes."""
         return self._fan_modes
-
-    @property
-    def supported_features(self) -> int:
-        """Return the list of supported features."""
-        return (
-            SUPPORT_TARGET_TEMPERATURE
-            | SUPPORT_TARGET_TEMPERATURE_RANGE
-            | SUPPORT_FAN_MODE
-        )
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set new target fan mode."""
