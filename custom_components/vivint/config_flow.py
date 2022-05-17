@@ -64,6 +64,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_PASSWORD: self._hub._data[CONF_PASSWORD],
         }
 
+        await self._hub.disconnect()
         if existing_entry:
             self.hass.config_entries.async_update_entry(
                 existing_entry, data=config_data
@@ -71,7 +72,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self.hass.config_entries.async_reload(existing_entry.entry_id)
             return self.async_abort(reason="reauth_successful")
 
-        await self._hub.disconnect()
         return self.async_create_entry(
             title=config_data[CONF_USERNAME], data=config_data
         )
@@ -143,7 +143,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Perform reauth upon an API authentication error."""
-        return await self.async_step_reauth_confirm()
+        return await self.async_step_reauth_confirm(user_input)
 
     async def async_step_reauth_confirm(
         self, user_input: dict[str, Any] | None = None

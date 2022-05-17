@@ -60,7 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except (VivintSkyApiMfaRequiredError, VivintSkyApiAuthenticationError) as ex:
         raise ConfigEntryAuthFailed(ex) from ex
     except (VivintSkyApiError, ClientResponseError, ClientConnectorError) as ex:
-        raise ConfigEntryNotReady from ex
+        raise ConfigEntryNotReady(ex) from ex
 
     dev_reg = await device_registry.async_get_registry(hass)
 
