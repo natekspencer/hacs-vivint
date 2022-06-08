@@ -51,15 +51,6 @@ After this integration is set up, you can configure a couple of options relating
 
 ---
 
-## TODO
-
-- Add advanced support for thermostats\*\*
-- Add support for 2FA\*\*
-
-\*\* These can't be done until the underlying library has been updated
-
----
-
 ## Support Me
 
 I'm not employed by Vivint, and provide this custom component purely for your own enjoyment and home automation needs.
