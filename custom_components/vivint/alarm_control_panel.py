@@ -86,6 +86,6 @@ class VivintAlarmControlPanelEntity(VivintEntity, AlarmControlPanelEntity):
         """Send arm home command."""
         await self.device.arm_stay()
 
-    async def async_alarm_arm_away(self, cod: str | None = None) -> None:
+    async def async_alarm_arm_away(self, code: str | None = None) -> None:
         """Send arm away command."""
         await self.device.arm_away()
