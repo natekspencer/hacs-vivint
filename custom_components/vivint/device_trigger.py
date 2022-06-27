@@ -30,7 +30,7 @@ async def async_get_vivint_device(
     hass: HomeAssistant, device_id: str
 ) -> VivintDevice | None:
     """Get a Vivint device for the given device registry id."""
-    device_registry: DeviceRegistry = hass.helpers.device_registry.async_get()
+    device_registry: DeviceRegistry = hass.helpers.device_registry.async_get(hass)
     registry_device = device_registry.async_get(device_id)
     identifier = list(list(registry_device.identifiers)[0])[1]
     [panel_id, vivint_device_id] = [int(item) for item in identifier.split("-")]
