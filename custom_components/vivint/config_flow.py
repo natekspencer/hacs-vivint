@@ -123,12 +123,19 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle a multi-factor authentication (MFA) flow."""
-        super().async_step_user()
+        await super().async_step_user()
         if user_input is None:
             return self.async_show_form(step_id="mfa", data_schema=STEP_MFA_DATA_SCHEMA)
 
         try:
             await self._hub.verify_mfa(user_input[CONF_MFA])
+        except VivintSkyApiAuthenticationError as err:  # pylint: disable=broad-except
+            _LOGGER.error(err)
+            return self.async_show_form(
+                step_id="mfa",
+                data_schema=STEP_MFA_DATA_SCHEMA,
+                errors={"base": str(err)},
+            )
         except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.error(ex)
             return self.async_show_form(
