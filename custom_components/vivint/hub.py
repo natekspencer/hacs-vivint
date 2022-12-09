@@ -176,5 +176,5 @@ class VivintEntity(CoordinatorEntity):
             sw_version=device.software_version,
             via_device=None
             if isinstance(device, AlarmPanel)
-            else (DOMAIN, device.alarm_panel.id),
+            else get_device_id(device.alarm_panel),
         )
