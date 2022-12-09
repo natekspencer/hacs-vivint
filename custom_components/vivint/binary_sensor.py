@@ -1,4 +1,6 @@
 """Support for Vivint binary sensors."""
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 
 from vivintpy.devices import VivintDevice
@@ -15,6 +17,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_call_later
 from homeassistant.util.dt import utcnow
@@ -49,6 +52,18 @@ async def async_setup_entry(
                             device=device,
                             hub=hub,
                             entity_description=ENTITY_DESCRIPTION_MOTION,
+                        )
+                    )
+                elif hasattr(device, "node_online"):
+                    entities.append(
+                        VivintOnlineBinarySensorEntity(
+                            device=device, hub=hub, key="node_online"
+                        )
+                    )
+                elif hasattr(device, "is_online"):
+                    entities.append(
+                        VivintOnlineBinarySensorEntity(
+                            device=device, hub=hub, key="is_online"
                         )
                     )
 
@@ -199,3 +214,27 @@ class VivintCameraBinarySensorEntity(VivintEntity, BinarySensorEntity):
         if self._motion_stopped_callback is not None:
             self._motion_stopped_callback()
             self._motion_stopped_callback = None
+
+
+class VivintOnlineBinarySensorEntity(VivintEntity, BinarySensorEntity):
+    """Vivint online binary sensor entity."""
+
+    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_has_entity_name = True
+    _attr_name = "Online"
+
+    def __init__(self, device: VivintDevice, hub: VivintHub, key: str) -> None:
+        """Initialize a Vivint online binary sensor entity."""
+        super().__init__(device=device, hub=hub)
+        self._key = key
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{self.device.alarm_panel.id}-{self.device.id}-online"
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if the binary sensor is on."""
+        return getattr(self.device, self._key)
