@@ -1,11 +1,11 @@
 {
   "domain": "vivint",
   "name": "Vivint",
-  "version": "2022.12.1",
+  "version": "2022.12.2",
   "config_flow": true,
   "documentation": "https://github.com/natekspencer/hacs-vivint",
   "issue_tracker": "https://github.com/natekspencer/hacs-vivint/issues",
-  "requirements": ["vivintpy==2022.12.1"],
+  "requirements": ["vivintpy==2022.12.2"],
   "dependencies": ["ffmpeg"],
   "codeowners": ["@natekspencer"],
   "zeroconf": ["_vivint-ODC300._tcp.local.", "_vivint-DBC350._tcp.local."]
