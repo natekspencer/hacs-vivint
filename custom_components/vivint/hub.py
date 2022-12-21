@@ -22,7 +22,7 @@ from vivintpy.exceptions import (
 
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityDescription
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -140,6 +140,47 @@ class VivintHub:
         )
         self.logged_in = True
         return self.logged_in
+
+
+class VivintBaseEntity(CoordinatorEntity):
+    """Generic Vivint entity representing common data and methods."""
+
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        device: VivintDevice,
+        hub: VivintHub,
+        entity_description: EntityDescription,
+    ) -> None:
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(hub.coordinator)
+        self.device = device
+        self.hub = hub
+        self.entity_description = entity_description
+
+        self._attr_unique_id = (
+            f"{device.alarm_panel.id}-{device.id}-{entity_description.key}"
+        )
+        device = self.device.parent if self.device.is_subdevice else self.device
+        self._attr_device_info = DeviceInfo(
+            default_manufacturer="Vivint",
+            identifiers={get_device_id(device)},
+            name=device.name if device.name else type(device).__name__,
+            manufacturer=device.manufacturer,
+            model=device.model,
+            sw_version=device.software_version,
+            via_device=None
+            if isinstance(device, AlarmPanel)
+            else get_device_id(device.alarm_panel),
+        )
+
+    async def async_added_to_hass(self) -> None:
+        """Set up a listener for the entity."""
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            self.device.on(UPDATE, lambda _: self.async_write_ha_state())
+        )
 
 
 class VivintEntity(CoordinatorEntity):
