@@ -1,9 +1,11 @@
 """Support for Vivint binary sensors."""
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from vivintpy.devices import VivintDevice
+from vivintpy.devices import BypassTamperDevice, VivintDevice
 from vivintpy.devices.camera import MOTION_DETECTED, Camera
 from vivintpy.devices.wireless_sensor import WirelessSensor
 from vivintpy.enums import EquipmentType, SensorType
@@ -23,7 +25,7 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.util.dt import utcnow
 
 from .const import DOMAIN
-from .hub import VivintEntity, VivintHub
+from .hub import VivintBaseEntity, VivintEntity, VivintHub
 
 MOTION_STOPPED_SECONDS = 30
 
@@ -44,8 +46,16 @@ async def async_setup_entry(
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
+                entities.extend(
+                    VivintBinarySensorEntity(
+                        device=device, hub=hub, entity_description=description
+                    )
+                    for cls, descriptions in BINARY_SENSORS.items()
+                    if isinstance(device, cls)
+                    for description in descriptions
+                )
                 if isinstance(device, WirelessSensor):
-                    entities.append(VivintBinarySensorEntity(device=device, hub=hub))
+                    entities.append(VivintBinarySensorEntityOld(device=device, hub=hub))
                 elif isinstance(device, Camera):
                     entities.append(
                         VivintCameraBinarySensorEntity(
@@ -75,9 +85,9 @@ async def async_setup_entry(
     @callback
     def async_add_sensor(device: VivintDevice) -> None:
         """Add Vivint binary sensor."""
-        entities: list[VivintBinarySensorEntity] = []
+        entities: list[VivintBinarySensorEntityOld] = []
         if isinstance(device, WirelessSensor):
-            entities.append(VivintBinarySensorEntity(device=device, hub=hub))
+            entities.append(VivintBinarySensorEntityOld(device=device, hub=hub))
 
         async_add_entities(entities)
 
@@ -90,7 +100,52 @@ async def async_setup_entry(
     )
 
 
-class VivintBinarySensorEntity(VivintEntity, BinarySensorEntity):
+@dataclass
+class VivintBinarySensorMixin:
+    """Vivint binary sensor required keys."""
+
+    is_on: Callable[[BypassTamperDevice], bool]
+
+
+@dataclass
+class VivintBinarySensorEntityDescription(
+    BinarySensorEntityDescription, VivintBinarySensorMixin
+):
+    """Vivint binary sensor entity description."""
+
+
+BINARY_SENSORS = {
+    BypassTamperDevice: (
+        VivintBinarySensorEntityDescription(
+            key="bypassed",
+            device_class=BinarySensorDeviceClass.SAFETY,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            name="Bypassed",
+            is_on=lambda device: device.is_bypassed,
+        ),
+        VivintBinarySensorEntityDescription(
+            key="tampered",
+            device_class=BinarySensorDeviceClass.TAMPER,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            name="Tampered",
+            is_on=lambda device: device.is_tampered,
+        ),
+    )
+}
+
+
+class VivintBinarySensorEntity(VivintBaseEntity, BinarySensorEntity):
+    """Vivint binary sensor."""
+
+    entity_description: VivintBinarySensorEntityDescription
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if the binary sensor is on."""
+        return self.entity_description.is_on(self.device)
+
+
+class VivintBinarySensorEntityOld(VivintEntity, BinarySensorEntity):
     """Vivint Binary Sensor."""
 
     @property
