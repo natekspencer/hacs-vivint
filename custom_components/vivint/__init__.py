@@ -16,7 +16,7 @@ from vivintpy.exceptions import (
 )
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_DEVICE_ID, ATTR_DOMAIN
+from homeassistant.const import ATTR_DEVICE_ID, ATTR_DOMAIN, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry
@@ -28,32 +28,26 @@ from .hub import VivintHub, get_device_id
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [
-    "alarm_control_panel",
-    "binary_sensor",
-    "camera",
-    "climate",
-    "cover",
-    "light",
-    "lock",
-    "sensor",
-    "switch",
+    Platform.ALARM_CONTROL_PANEL,
+    Platform.BINARY_SENSOR,
+    Platform.CAMERA,
+    Platform.CLIMATE,
+    Platform.COVER,
+    Platform.LIGHT,
+    Platform.LOCK,
+    Platform.SENSOR,
+    Platform.SWITCH,
 ]
 
 ATTR_TYPE = "type"
-
-
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Set up the Vivint domain."""
-    hass.data.setdefault(DOMAIN, {})
-
-    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Vivint from a config entry."""
     undo_listener = entry.add_update_listener(update_listener)
 
-    hub = hass.data[DOMAIN][entry.entry_id] = VivintHub(hass, entry.data, undo_listener)
+    hub = VivintHub(hass, entry.data, undo_listener)
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = hub
 
     try:
         await hub.login(load_devices=True, subscribe_for_realtime_updates=True)
@@ -126,7 +120,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         )
                     )
 
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # Check for devices that no longer exist and remove them
     stored_devices = device_registry.async_entries_for_config_entry(
@@ -169,6 +163,6 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     hass.data[DOMAIN].pop(entry.entry_id)
 
 
-async def update_listener(hass, entry: ConfigEntry) -> None:
+async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle options update."""
     await hass.config_entries.async_reload(entry.entry_id)
