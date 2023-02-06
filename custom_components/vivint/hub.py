@@ -192,6 +192,19 @@ class VivintEntity(CoordinatorEntity):
         self.device = device
         self.hub = hub
 
+        device = self.device.parent if self.device.is_subdevice else self.device
+        self._attr_device_info = DeviceInfo(
+            default_manufacturer="Vivint",
+            identifiers={get_device_id(device)},
+            name=device.name if device.name else type(device).__name__,
+            manufacturer=device.manufacturer,
+            model=device.model,
+            sw_version=device.software_version,
+            via_device=None
+            if isinstance(device, AlarmPanel)
+            else get_device_id(device.alarm_panel),
+        )
+
     async def async_added_to_hass(self) -> None:
         """Set up a listener for the entity."""
         await super().async_added_to_hass()
@@ -203,19 +216,3 @@ class VivintEntity(CoordinatorEntity):
     def name(self) -> str:
         """Return the name of this entity."""
         return self.device.name
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device information for a Vivint device."""
-        device = self.device.parent if self.device.is_subdevice else self.device
-        return DeviceInfo(
-            default_manufacturer="Vivint",
-            identifiers={get_device_id(device)},
-            name=device.name if device.name else type(device).__name__,
-            manufacturer=device.manufacturer,
-            model=device.model,
-            sw_version=device.software_version,
-            via_device=None
-            if isinstance(device, AlarmPanel)
-            else get_device_id(device.alarm_panel),
-        )
