@@ -5,10 +5,11 @@ import logging
 
 from vivintpy.devices.camera import Camera as VivintCamera
 
-from homeassistant.components.camera import SUPPORT_STREAM, Camera
+from homeassistant.components.camera import Camera, CameraEntityFeature
 from homeassistant.components.ffmpeg import async_get_image
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, format_mac
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -45,7 +46,7 @@ async def async_setup_entry(
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
-                if type(device) is VivintCamera:
+                if isinstance(device, VivintCamera):
                     if rtsp_url_logging:
                         await log_rtsp_urls(device)
 
@@ -81,7 +82,7 @@ async def log_rtsp_urls(device: VivintCamera) -> None:
 class VivintCam(VivintEntity, Camera):
     """Vivint camera."""
 
-    _attr_supported_features = SUPPORT_STREAM
+    _attr_supported_features = CameraEntityFeature.STREAM
 
     def __init__(
         self,
@@ -93,6 +94,10 @@ class VivintCam(VivintEntity, Camera):
         """Initialize a Vivint camera."""
         super().__init__(device=device, hub=hub)
         Camera.__init__(self)
+
+        self._attr_device_info.setdefault("connections", set()).add(
+            (CONNECTION_NETWORK_MAC, format_mac(device.mac_address))
+        )
 
         self.__hd_stream = hd_stream
         self.__rtsp_stream = rtsp_stream
@@ -128,6 +133,6 @@ class VivintCam(VivintEntity, Camera):
                 height=height,
             )
         except:  # pylint:disable=bare-except
-            _LOGGER.debug(f"Could not retrieve latest image for {self.name}")
+            _LOGGER.debug("Could not retrieve latest image for %s", self.name)
 
         return self.__last_image
