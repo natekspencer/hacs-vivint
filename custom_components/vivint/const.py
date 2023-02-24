@@ -18,4 +18,4 @@ CONF_RTSP_URL_LOGGING = "rtsp_url_logging"
 DEFAULT_HD_STREAM = True
 DEFAULT_RTSP_STREAM = RTSP_STREAM_DIRECT
 DEFAULT_RTSP_URL_LOGGING = False
-DEFAULT_CACHEDB = ".vivintpy_cache.pickle"
+DEFAULT_CACHEDB = ".vivintpy_2023.2.0_cache.pickle"

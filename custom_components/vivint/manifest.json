@@ -2,7 +2,7 @@
   "domain": "vivint",
   "name": "Vivint",
   "integration_type": "hub",
-  "version": "2023.2.2",
+  "version": "2023.2.3",
   "config_flow": true,
   "documentation": "https://github.com/natekspencer/hacs-vivint",
   "issue_tracker": "https://github.com/natekspencer/hacs-vivint/issues",
