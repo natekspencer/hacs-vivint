@@ -56,6 +56,7 @@ class VivintHub:
         self.account: Account = None
         self.logged_in = False
         self.session: ClientSession = None
+        self.cache_file = hass.config.path(DEFAULT_CACHEDB)
 
         async def _async_update_data() -> None:
             """Update all device states from the Vivint API."""
@@ -78,8 +79,8 @@ class VivintHub:
         # Get previous session if available
         abs_cookie_jar = aiohttp.CookieJar()
         try:
-            abs_cookie_jar.load(self.cache_file())
-        except:
+            abs_cookie_jar.load(self.cache_file)
+        except:  # pylint: disable=bare-except
             _LOGGER.debug("No previous session found")
 
         self.session = ClientSession(cookie_jar=abs_cookie_jar)
@@ -125,18 +126,15 @@ class VivintHub:
         except Exception as ex:
             raise ex
 
-    def cache_file(self) -> str:
-        """Get cache file."""
-        return self.coordinator.hass.config.path(DEFAULT_CACHEDB)
-
     def remove_cache_file(self) -> None:
         """Remove the cached session file."""
-        os.remove(self.cache_file())
+        os.remove(self.cache_file)
 
     def save_session(self) -> bool:
         """Save session for reuse."""
+        # pylint: disable=protected-access
         self.account.vivintskyapi._VivintSkyApi__client_session.cookie_jar.save(
-            self.cache_file()
+            self.cache_file
         )
         self.logged_in = True
         return self.logged_in
