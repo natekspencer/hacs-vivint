@@ -10,6 +10,7 @@ import aiohttp
 from aiohttp import ClientResponseError
 from aiohttp.client import ClientSession
 from aiohttp.client_exceptions import ClientConnectorError
+from awesomeversion import AwesomeVersion as AweVer
 from vivintpy.account import Account
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.alarm_panel import AlarmPanel
@@ -28,10 +29,12 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from .const import DEFAULT_CACHEDB, DOMAIN
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+CACHE_VERSION = "_1" if AweVer(aiohttp.__version__) >= AweVer("3.8.4") else ""
+DEFAULT_CACHEDB = f".vivintpy_cache{CACHE_VERSION}.pickle"
 UPDATE_INTERVAL = 300
 
 
