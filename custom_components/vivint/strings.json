@@ -35,12 +35,14 @@
     "step": {
       "init": {
         "data": {
+          "disarm_code": "Disarm code",
           "hd_stream": "Stream camera in HD",
           "rtsp_stream": "Select which RTSP camera stream to use",
           "rtsp_url_logging": "Log camera RTSP URLs (this contains potentially sensitive information)"
         }
       }
-    }
+    },
+    "error": { "disarm_code_invalid": "Disarm code is invalid" }
   },
   "device_automation": {
     "trigger_type": {

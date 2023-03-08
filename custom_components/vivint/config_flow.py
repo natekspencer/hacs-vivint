@@ -13,12 +13,20 @@ from vivintpy.exceptions import (
 )
 import voluptuous as vol
 
-from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntry, ConfigFlow
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.schema_config_entry_flow import (
+    SchemaCommonFlowHandler,
+    SchemaFlowError,
+    SchemaFlowFormStep,
+    SchemaOptionsFlowHandler,
+)
 
 from .const import (
+    CONF_DISARM_CODE,
     CONF_HD_STREAM,
     CONF_MFA,
     CONF_RTSP_STREAM,
@@ -26,29 +34,49 @@ from .const import (
     DEFAULT_HD_STREAM,
     DEFAULT_RTSP_STREAM,
     DEFAULT_RTSP_URL_LOGGING,
+    DOMAIN,
     RTSP_STREAM_TYPES,
 )
-from .const import DOMAIN  # pylint:disable=unused-import
 from .hub import VivintHub
 
 _LOGGER = logging.getLogger(__name__)
 
+
+async def _validate_options(
+    handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
+) -> dict[str, Any]:
+    """Validate options config."""
+    try:
+        cv.matches_regex("^[0-9]*$")(user_input[CONF_DISARM_CODE])
+    except vol.Invalid as exc:
+        raise SchemaFlowError("disarm_code_invalid") from exc
+
+    return user_input
+
+
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {vol.Required(CONF_USERNAME): str, vol.Required(CONF_PASSWORD): str}
 )
-
-STEP_MFA_DATA_SCHEMA = vol.Schema(
+STEP_MFA_DATA_SCHEMA = vol.Schema({vol.Required(CONF_MFA): str})
+OPTIONS_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_MFA): str,
+        vol.Optional(CONF_DISARM_CODE, default=""): str,
+        vol.Optional(CONF_HD_STREAM, default=DEFAULT_HD_STREAM): bool,
+        vol.Optional(CONF_RTSP_STREAM, default=DEFAULT_RTSP_STREAM): vol.In(
+            RTSP_STREAM_TYPES
+        ),
+        vol.Optional(CONF_RTSP_URL_LOGGING, default=DEFAULT_RTSP_URL_LOGGING): bool,
     }
 )
+OPTIONS_FLOW = {
+    "init": SchemaFlowFormStep(OPTIONS_SCHEMA, validate_user_input=_validate_options)
+}
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class VivintConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Vivint."""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
     def __init__(self) -> None:
         """Initialize a config flow."""
@@ -169,47 +197,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry) -> OptionsFlow:
+    def async_get_options_flow(config_entry: ConfigEntry) -> SchemaOptionsFlowHandler:
         """Get the options flow for this handler."""
-        return OptionsFlow(config_entry)
-
-
-class OptionsFlow(config_entries.OptionsFlow):
-    """Handle Vivint options."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize Vivint options flow."""
-        self.config_entry = config_entry
-
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        """Manage Vivint options."""
-        if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
-
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_HD_STREAM,
-                        default=self.config_entry.options.get(
-                            CONF_HD_STREAM, DEFAULT_HD_STREAM
-                        ),
-                    ): bool,
-                    vol.Optional(
-                        CONF_RTSP_STREAM,
-                        default=self.config_entry.options.get(
-                            CONF_RTSP_STREAM, DEFAULT_RTSP_STREAM
-                        ),
-                    ): vol.In(RTSP_STREAM_TYPES),
-                    vol.Optional(
-                        CONF_RTSP_URL_LOGGING,
-                        default=self.config_entry.options.get(
-                            CONF_RTSP_URL_LOGGING, DEFAULT_RTSP_URL_LOGGING
-                        ),
-                    ): bool,
-                }
-            ),
-        )
+        return SchemaOptionsFlowHandler(config_entry, OPTIONS_FLOW)

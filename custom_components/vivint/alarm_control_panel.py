@@ -1,11 +1,13 @@
 """Support for Vivint alarm control panel."""
 from __future__ import annotations
 
+from vivintpy.devices import VivintDevice
 from vivintpy.enums import ArmedState
 
 from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntity,
     AlarmControlPanelEntityFeature,
+    CodeFormat,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -20,8 +22,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from .const import DOMAIN
-from .hub import VivintEntity
+from .const import CONF_DISARM_CODE, DOMAIN
+from .hub import VivintEntity, VivintHub
 
 ARMED_STATE_MAP = {
     ArmedState.DISARMED: STATE_ALARM_DISARMED,
@@ -46,10 +48,15 @@ async def async_setup_entry(
     """Set up Vivint alarm control panel using config entry."""
     entities = []
     hub = hass.data[DOMAIN][config_entry.entry_id]
+    disarm_code = config_entry.options.get(CONF_DISARM_CODE)
 
     for system in hub.account.systems:
         for device in system.alarm_panels:
-            entities.append(VivintAlarmControlPanelEntity(device=device, hub=hub))
+            entities.append(
+                VivintAlarmControlPanelEntity(
+                    device=device, hub=hub, disarm_code=disarm_code
+                )
+            )
 
     if not entities:
         return
@@ -67,6 +74,15 @@ class VivintAlarmControlPanelEntity(VivintEntity, AlarmControlPanelEntity):
         | AlarmControlPanelEntityFeature.ARM_AWAY
     )
 
+    def __init__(
+        self, device: VivintDevice, hub: VivintHub, disarm_code: str | None
+    ) -> None:
+        """Create the entity."""
+        super().__init__(device, hub)
+        if disarm_code:
+            self._attr_code_format = CodeFormat.NUMBER
+            self._disarm_code = disarm_code
+
     @property
     def unique_id(self) -> str:
         """Return a unique ID."""
@@ -79,7 +95,8 @@ class VivintAlarmControlPanelEntity(VivintEntity, AlarmControlPanelEntity):
 
     async def async_alarm_disarm(self, code: str | None = None) -> None:
         """Send disarm command."""
-        await self.device.disarm()
+        if not self.code_format or code == self._disarm_code:
+            await self.device.disarm()
 
     async def async_alarm_arm_home(self, code: str | None = None) -> None:
         """Send arm home command."""
