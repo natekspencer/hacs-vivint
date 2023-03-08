@@ -12,6 +12,7 @@ RTSP_STREAM_TYPES = {
 }
 
 CONF_MFA = "code"
+CONF_DISARM_CODE = "disarm_code"
 CONF_HD_STREAM = "hd_stream"
 CONF_RTSP_STREAM = "rtsp_stream"
 CONF_RTSP_URL_LOGGING = "rtsp_url_logging"
