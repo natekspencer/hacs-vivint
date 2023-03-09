@@ -1,13 +1,13 @@
 {
   "domain": "vivint",
   "name": "Vivint",
-  "integration_type": "hub",
-  "version": "2023.3.0",
+  "codeowners": ["@natekspencer"],
   "config_flow": true,
+  "dependencies": ["ffmpeg"],
   "documentation": "https://github.com/natekspencer/hacs-vivint",
+  "integration_type": "hub",
   "issue_tracker": "https://github.com/natekspencer/hacs-vivint/issues",
   "requirements": ["vivintpy==2023.2.0"],
-  "dependencies": ["ffmpeg"],
-  "codeowners": ["@natekspencer"],
+  "version": "2023.3.1",
   "zeroconf": ["_vivint-ODC300._tcp.local.", "_vivint-DBC350._tcp.local."]
 }
