@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from vivintpy.devices import VivintDevice
+from vivintpy.devices.alarm_panel import AlarmPanel
 from vivintpy.enums import ArmedState
 
 from homeassistant.components.alarm_control_panel import (
@@ -47,7 +48,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Vivint alarm control panel using config entry."""
     entities = []
-    hub = hass.data[DOMAIN][config_entry.entry_id]
+    hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
     disarm_code = config_entry.options.get(CONF_DISARM_CODE)
 
     for system in hub.account.systems:
@@ -67,6 +68,8 @@ async def async_setup_entry(
 class VivintAlarmControlPanelEntity(VivintEntity, AlarmControlPanelEntity):
     """Vivint Alarm Control Panel."""
 
+    device: AlarmPanel
+
     _attr_changed_by = None
     _attr_code_arm_required = False
     _attr_supported_features = (
@@ -75,7 +78,7 @@ class VivintAlarmControlPanelEntity(VivintEntity, AlarmControlPanelEntity):
     )
 
     def __init__(
-        self, device: VivintDevice, hub: VivintHub, disarm_code: str | None
+        self, device: AlarmPanel, hub: VivintHub, disarm_code: str | None
     ) -> None:
         """Create the entity."""
         super().__init__(device, hub)

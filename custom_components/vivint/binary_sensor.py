@@ -41,7 +41,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Vivint binary sensors using config entry."""
     entities = []
-    hub = hass.data[DOMAIN][config_entry.entry_id]
+    hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
 
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
@@ -66,14 +66,18 @@ async def async_setup_entry(
                     )
                 elif hasattr(device, "node_online"):
                     entities.append(
-                        VivintOnlineBinarySensorEntity(
-                            device=device, hub=hub, key="node_online"
+                        VivintBinarySensorEntity(
+                            device=device,
+                            hub=hub,
+                            entity_description=NODE_ONLINE_SENSOR_ENTITY_DESCRIPTION,
                         )
                     )
-                elif hasattr(device, "is_online"):
+                if hasattr(device, "is_online"):
                     entities.append(
-                        VivintOnlineBinarySensorEntity(
-                            device=device, hub=hub, key="is_online"
+                        VivintBinarySensorEntity(
+                            device=device,
+                            hub=hub,
+                            entity_description=IS_ONLINE_SENSOR_ENTITY_DESCRIPTION,
                         )
                     )
 
@@ -132,6 +136,20 @@ BINARY_SENSORS = {
         ),
     )
 }
+NODE_ONLINE_SENSOR_ENTITY_DESCRIPTION = VivintBinarySensorEntityDescription(
+    key="online",
+    device_class=BinarySensorDeviceClass.CONNECTIVITY,
+    entity_category=EntityCategory.DIAGNOSTIC,
+    name="Online",
+    is_on=lambda device: getattr(device, "node_online"),
+)
+IS_ONLINE_SENSOR_ENTITY_DESCRIPTION = VivintBinarySensorEntityDescription(
+    key="online",
+    device_class=BinarySensorDeviceClass.CONNECTIVITY,
+    entity_category=EntityCategory.DIAGNOSTIC,
+    name="Online",
+    is_on=lambda device: getattr(device, "is_online"),
+)
 
 
 class VivintBinarySensorEntity(VivintBaseEntity, BinarySensorEntity):
@@ -269,27 +287,3 @@ class VivintCameraBinarySensorEntity(VivintEntity, BinarySensorEntity):
         if self._motion_stopped_callback is not None:
             self._motion_stopped_callback()
             self._motion_stopped_callback = None
-
-
-class VivintOnlineBinarySensorEntity(VivintEntity, BinarySensorEntity):
-    """Vivint online binary sensor entity."""
-
-    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_has_entity_name = True
-    _attr_name = "Online"
-
-    def __init__(self, device: VivintDevice, hub: VivintHub, key: str) -> None:
-        """Initialize a Vivint online binary sensor entity."""
-        super().__init__(device=device, hub=hub)
-        self._key = key
-
-    @property
-    def unique_id(self) -> str:
-        """Return a unique ID."""
-        return f"{self.device.alarm_panel.id}-{self.device.id}-online"
-
-    @property
-    def is_on(self) -> bool:
-        """Return true if the binary sensor is on."""
-        return getattr(self.device, self._key)

@@ -146,6 +146,8 @@ class VivintHub:
 class VivintBaseEntity(CoordinatorEntity):
     """Generic Vivint entity representing common data and methods."""
 
+    device: VivintDevice
+
     _attr_has_entity_name = True
 
     def __init__(
@@ -186,6 +188,8 @@ class VivintBaseEntity(CoordinatorEntity):
 
 class VivintEntity(CoordinatorEntity):
     """Generic Vivint entity representing common data and methods."""
+
+    device: VivintDevice
 
     def __init__(self, device: VivintDevice, hub: VivintHub) -> None:
         """Pass coordinator to CoordinatorEntity."""
