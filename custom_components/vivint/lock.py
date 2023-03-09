@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .hub import VivintEntity
+from .hub import VivintEntity, VivintHub
 
 
 async def async_setup_entry(
@@ -19,7 +19,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Vivint door locks using config entry."""
     entities = []
-    hub = hass.data[DOMAIN][config_entry.entry_id]
+    hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
 
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
@@ -35,6 +35,8 @@ async def async_setup_entry(
 
 class VivintLockEntity(VivintEntity, LockEntity):
     """Vivint Lock."""
+
+    device: DoorLock
 
     @property
     def is_locked(self) -> bool:

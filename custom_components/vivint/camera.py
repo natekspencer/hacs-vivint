@@ -35,7 +35,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Vivint cameras using config entry."""
     entities = []
-    hub = hass.data[DOMAIN][config_entry.entry_id]
+    hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
 
     hd_stream = config_entry.options.get(CONF_HD_STREAM, DEFAULT_HD_STREAM)
     rtsp_stream = config_entry.options.get(CONF_RTSP_STREAM, DEFAULT_RTSP_STREAM)
@@ -51,7 +51,7 @@ async def async_setup_entry(
                         await log_rtsp_urls(device)
 
                     entities.append(
-                        VivintCam(
+                        VivintCameraEntity(
                             device=device,
                             hub=hub,
                             hd_stream=hd_stream,
@@ -79,8 +79,10 @@ async def log_rtsp_urls(device: VivintCamera) -> None:
     )
 
 
-class VivintCam(VivintEntity, Camera):
-    """Vivint camera."""
+class VivintCameraEntity(VivintEntity, Camera):
+    """Vivint camera entity."""
+
+    device: VivintCamera
 
     _attr_supported_features = CameraEntityFeature.STREAM
 

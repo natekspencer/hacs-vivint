@@ -1,5 +1,4 @@
 """The Vivint integration."""
-import asyncio
 import logging
 
 from aiohttp import ClientResponseError

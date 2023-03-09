@@ -4,17 +4,16 @@ from typing import Any
 from vivintpy.devices.garage_door import GarageDoor
 
 from homeassistant.components.cover import (
-    SUPPORT_CLOSE,
-    SUPPORT_OPEN,
     CoverDeviceClass,
     CoverEntity,
+    CoverEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .hub import VivintEntity
+from .hub import VivintEntity, VivintHub
 
 
 async def async_setup_entry(
@@ -24,7 +23,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Vivint garage doors using config entry."""
     entities = []
-    hub = hass.data[DOMAIN][config_entry.entry_id]
+    hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
 
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
@@ -41,8 +40,10 @@ async def async_setup_entry(
 class VivintGarageDoorEntity(VivintEntity, CoverEntity):
     """Vivint Garage Door."""
 
+    device: GarageDoor
+
     _attr_device_class = CoverDeviceClass.GARAGE
-    _attr_supported_features = SUPPORT_CLOSE | SUPPORT_OPEN
+    _attr_supported_features = CoverEntityFeature.CLOSE | CoverEntityFeature.OPEN
 
     @property
     def is_opening(self) -> bool:
