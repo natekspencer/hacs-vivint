@@ -64,20 +64,12 @@ async def async_setup_entry(
                             entity_description=ENTITY_DESCRIPTION_MOTION,
                         )
                     )
-                elif hasattr(device, "node_online"):
-                    entities.append(
-                        VivintBinarySensorEntity(
-                            device=device,
-                            hub=hub,
-                            entity_description=NODE_ONLINE_SENSOR_ENTITY_DESCRIPTION,
-                        )
-                    )
                 if hasattr(device, "is_online"):
                     entities.append(
                         VivintBinarySensorEntity(
                             device=device,
                             hub=hub,
-                            entity_description=IS_ONLINE_SENSOR_ENTITY_DESCRIPTION,
+                            entity_description=ONLINE_SENSOR_ENTITY_DESCRIPTION,
                         )
                     )
 
@@ -136,14 +128,7 @@ BINARY_SENSORS = {
         ),
     )
 }
-NODE_ONLINE_SENSOR_ENTITY_DESCRIPTION = VivintBinarySensorEntityDescription(
-    key="online",
-    device_class=BinarySensorDeviceClass.CONNECTIVITY,
-    entity_category=EntityCategory.DIAGNOSTIC,
-    name="Online",
-    is_on=lambda device: getattr(device, "node_online"),
-)
-IS_ONLINE_SENSOR_ENTITY_DESCRIPTION = VivintBinarySensorEntityDescription(
+ONLINE_SENSOR_ENTITY_DESCRIPTION = VivintBinarySensorEntityDescription(
     key="online",
     device_class=BinarySensorDeviceClass.CONNECTIVITY,
     entity_category=EntityCategory.DIAGNOSTIC,
