@@ -1,13 +1,12 @@
 """Support for Vivint alarm control panel."""
 from __future__ import annotations
 
-from vivintpy.devices import VivintDevice
 from vivintpy.devices.alarm_panel import AlarmPanel
 from vivintpy.enums import ArmedState
 
 from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntity,
-    AlarmControlPanelEntityFeature,
+    AlarmControlPanelEntityFeature as Feature,
     CodeFormat,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -72,10 +71,7 @@ class VivintAlarmControlPanelEntity(VivintEntity, AlarmControlPanelEntity):
 
     _attr_changed_by = None
     _attr_code_arm_required = False
-    _attr_supported_features = (
-        AlarmControlPanelEntityFeature.ARM_HOME
-        | AlarmControlPanelEntityFeature.ARM_AWAY
-    )
+    _attr_supported_features = Feature.ARM_HOME | Feature.ARM_AWAY | Feature.TRIGGER
 
     def __init__(
         self, device: AlarmPanel, hub: VivintHub, disarm_code: str | None
@@ -108,3 +104,7 @@ class VivintAlarmControlPanelEntity(VivintEntity, AlarmControlPanelEntity):
     async def async_alarm_arm_away(self, code: str | None = None) -> None:
         """Send arm away command."""
         await self.device.arm_away()
+
+    async def async_alarm_trigger(self, code: str | None = None) -> None:
+        """Send alarm trigger command."""
+        await self.device.trigger_alarm()
