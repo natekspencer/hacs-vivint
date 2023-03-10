@@ -1,15 +1,33 @@
 """Support for Vivint switches."""
+from __future__ import annotations
+
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
+from vivintpy.devices import VivintDevice
+from vivintpy.devices.camera import Camera
 from vivintpy.devices.switch import BinarySwitch
+from vivintpy.enums import (
+    CapabilityCategoryType as Category,
+    CapabilityType as Capability,
+)
 
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .hub import VivintEntity, VivintHub
+from .hub import VivintBaseEntity, VivintHub
+
+
+def has_capability(device: VivintDevice, category: Category, capability: Capability):
+    """Check if a device has a capability."""
+    if capability in (device.capabilities or {}).get(category, []):
+        return True
+    return False
 
 
 async def async_setup_entry(
@@ -25,7 +43,25 @@ async def async_setup_entry(
         for alarm_panel in system.alarm_panels:
             for device in alarm_panel.devices:
                 if isinstance(device, BinarySwitch):
-                    entities.append(VivintSwitchEntity(device=device, hub=hub))
+                    entities.append(
+                        VivintSwitchEntity(
+                            device=device, hub=hub, entity_description=IS_ON
+                        )
+                    )
+                if has_capability(device, Category.CAMERA, Capability.CHIME_EXTENDER):
+                    entities.append(
+                        VivintSwitchEntity(
+                            device=device,
+                            hub=hub,
+                            entity_description=CAMERA_CHIME_EXTENDER,
+                        )
+                    )
+                if has_capability(device, Category.CAMERA, Capability.PRIVACY_MODE):
+                    entities.append(
+                        VivintSwitchEntity(
+                            device=device, hub=hub, entity_description=PRIVACY_MODE
+                        )
+                    )
 
     if not entities:
         return
@@ -33,25 +69,59 @@ async def async_setup_entry(
     async_add_entities(entities, True)
 
 
-class VivintSwitchEntity(VivintEntity, SwitchEntity):
+@dataclass
+class VivintSwitchMixin:
+    """Vivint switch required keys."""
+
+    is_on: Callable[[BinarySwitch | Camera], bool | None]
+    turn_on: Callable[[BinarySwitch | Camera], bool | None]
+    turn_off: Callable[[BinarySwitch | Camera], bool | None]
+
+
+@dataclass
+class VivintSwitchEntityDescription(SwitchEntityDescription, VivintSwitchMixin):
+    """Vivint binary sensor entity description."""
+
+
+IS_ON = VivintSwitchEntityDescription(
+    key="is_on",
+    is_on=lambda device: device.is_on,
+    turn_on=lambda device: device.turn_on(),
+    turn_off=lambda device: device.turn_off(),
+)
+CAMERA_CHIME_EXTENDER = VivintSwitchEntityDescription(
+    key="chime_extender",
+    entity_category=EntityCategory.CONFIG,
+    name="Chime extender",
+    is_on=lambda device: device.extend_chime_enabled,
+    turn_on=lambda device: device.set_as_doorbell_chime_extender(True),
+    turn_off=lambda device: device.set_as_doorbell_chime_extender(False),
+)
+PRIVACY_MODE = VivintSwitchEntityDescription(
+    key="privacy_mode",
+    entity_category=EntityCategory.CONFIG,
+    name="Privacy mode",
+    is_on=lambda device: device.is_in_privacy_mode,
+    turn_on=lambda device: device.set_privacy_mode(True),
+    turn_off=lambda device: device.set_privacy_mode(False),
+)
+
+
+class VivintSwitchEntity(VivintBaseEntity, SwitchEntity):
     """Vivint Switch."""
 
-    device: BinarySwitch
+    device: BinarySwitch | Camera
+    entity_description: VivintSwitchEntityDescription
 
     @property
     def is_on(self) -> bool:
         """Return True if the switch is on."""
-        return self.device.is_on
-
-    @property
-    def unique_id(self) -> str:
-        """Return a unique ID."""
-        return f"{self.device.alarm_panel.id}-{self.device.id}"
+        return self.entity_description.is_on(self.device)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
-        await self.device.turn_on()
+        await self.entity_description.turn_on(self.device)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
-        await self.device.turn_off()
+        await self.entity_description.turn_off(self.device)
