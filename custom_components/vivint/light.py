@@ -39,6 +39,7 @@ class VivintLightEntity(VivintEntity, LightEntity):
     device: MultilevelSwitch
 
     _attr_color_mode: ColorMode.BRIGHTNESS
+    _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
 
     @property
     def is_on(self) -> bool:
