@@ -1,6 +1,8 @@
 """Provides device triggers for Vivint."""
 from __future__ import annotations
 
+from typing import Any
+
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.camera import DOORBELL_DING, MOTION_DETECTED, Camera
 from vivintpy.enums import CapabilityCategoryType
@@ -10,8 +12,8 @@ from homeassistant.components.device_automation import DEVICE_TRIGGER_BASE_SCHEM
 from homeassistant.components.homeassistant.triggers import event as event_trigger
 from homeassistant.const import CONF_DEVICE_ID, CONF_DOMAIN, CONF_PLATFORM, CONF_TYPE
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant
-from homeassistant.helpers.device_registry import DeviceRegistry
-from homeassistant.helpers.trigger import TriggerActionType
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.trigger import TriggerActionType, TriggerInfo
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN, EVENT_TYPE
@@ -30,12 +32,20 @@ async def async_get_vivint_device(
     hass: HomeAssistant, device_id: str
 ) -> VivintDevice | None:
     """Get a Vivint device for the given device registry id."""
-    device_registry: DeviceRegistry = hass.helpers.device_registry.async_get(hass)
-    registry_device = device_registry.async_get(device_id)
-    identifier = list(list(registry_device.identifiers)[0])[1]
+    dev_reg = dr.async_get(hass)
+    if not (device_entry := dev_reg.async_get(device_id)):
+        raise ValueError(f"Device ID {device_id} is not valid")
+
+    identifiers = device_entry.identifiers
+    if not (identifier := next((id[1] for id in identifiers if id[0] == DOMAIN), None)):
+        return None
+
     [panel_id, vivint_device_id] = [int(item) for item in identifier.split("-")]
-    for config_entry_id in registry_device.config_entries:
-        hub: VivintHub = hass.data[DOMAIN].get(config_entry_id)
+    for config_entry_id in device_entry.config_entries:
+        if config_entry_id not in hass.data[DOMAIN]:
+            continue
+
+        hub: VivintHub = hass.data[DOMAIN][config_entry_id]
         for system in hub.account.systems:
             if system.id != panel_id:
                 continue
@@ -46,8 +56,10 @@ async def async_get_vivint_device(
     return None
 
 
-async def async_get_triggers(hass: HomeAssistant, device_id: str) -> list[dict]:
-    """Return a list of triggers."""
+async def async_get_triggers(
+    hass: HomeAssistant, device_id: str
+) -> list[dict[str, Any]]:
+    """List device triggers for Vivint devices."""
     device = await async_get_vivint_device(hass, device_id)
 
     triggers = []
@@ -61,7 +73,7 @@ async def async_get_triggers(hass: HomeAssistant, device_id: str) -> list[dict]:
                 CONF_TYPE: MOTION_DETECTED,
             }
         )
-        if CapabilityCategoryType.DOORBELL in device.capabilities.keys():
+        if CapabilityCategoryType.DOORBELL in device.capabilities:
             triggers.append(
                 {
                     CONF_PLATFORM: "device",
@@ -78,10 +90,9 @@ async def async_attach_trigger(
     hass: HomeAssistant,
     config: ConfigType,
     action: TriggerActionType,
-    automation_info: dict,
+    automation_info: TriggerInfo,
 ) -> CALLBACK_TYPE:
     """Attach a trigger."""
-    config = TRIGGER_SCHEMA(config)
     event_config = event_trigger.TRIGGER_SCHEMA(
         {
             event_trigger.CONF_PLATFORM: "event",
