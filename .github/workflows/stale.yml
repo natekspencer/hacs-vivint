@@ -24,3 +24,4 @@ jobs:
         stale-issue-message: 'This issue has now been marked as stale and will be closed if no further activity occurs.'
         stale-pr-message: 'This PR has now been marked as stale and will be closed if no further activity occurs.'
         exempt-issue-labels: 'enhancement'
+        days-before-stale: 30
