@@ -62,6 +62,18 @@ async def async_setup_entry(
                             device=device, hub=hub, entity_description=PRIVACY_MODE
                         )
                     )
+                if has_capability(device, Category.CAMERA, Capability.DETER):
+                    entities.append(
+                        VivintSwitchEntity(
+                            device=device, hub=hub, entity_description=DETER_MODE
+                        )
+                    )
+                if has_capability(device, Category.DOORBELL, Capability.CAN_CHIME):
+                    entities.append(
+                        VivintSwitchEntity(
+                            device=device, hub=hub, entity_description=DETER_MODE
+                        )
+                    )
 
     if not entities:
         return
@@ -104,6 +116,14 @@ PRIVACY_MODE = VivintSwitchEntityDescription(
     is_on=lambda device: device.is_in_privacy_mode,
     turn_on=lambda device: device.set_privacy_mode(True),
     turn_off=lambda device: device.set_privacy_mode(False),
+)
+DETER_MODE = VivintSwitchEntityDescription(
+    key="deter_mode",
+    entity_category=EntityCategory.CONFIG,
+    name="Deter Mode",
+    is_on=lambda device: device.is_in_deter_mode,
+    turn_on=lambda device: device.set_deter_mode(True),
+    turn_off=lambda device: device.set_deter_mode(False),
 )
 
 
