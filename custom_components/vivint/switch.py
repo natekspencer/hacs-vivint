@@ -11,6 +11,7 @@ from vivintpy.devices.switch import BinarySwitch
 from vivintpy.enums import (
     CapabilityCategoryType as Category,
     CapabilityType as Capability,
+    FeatureType as Feature,
 )
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
@@ -28,6 +29,11 @@ def has_capability(device: VivintDevice, category: Category, capability: Capabil
     if capability in (device.capabilities or {}).get(category, []):
         return True
     return False
+
+
+def has_feature(device: VivintDevice, feature: Feature):
+    """Check if a device has a feature."""
+    return feature in (device.features or [])
 
 
 async def async_setup_entry(
@@ -60,6 +66,12 @@ async def async_setup_entry(
                     entities.append(
                         VivintSwitchEntity(
                             device=device, hub=hub, entity_description=PRIVACY_MODE
+                        )
+                    )
+                if has_feature(device, Feature.DETER):
+                    entities.append(
+                        VivintSwitchEntity(
+                            device=device, hub=hub, entity_description=DETER_MODE
                         )
                     )
 
@@ -104,6 +116,14 @@ PRIVACY_MODE = VivintSwitchEntityDescription(
     is_on=lambda device: device.is_in_privacy_mode,
     turn_on=lambda device: device.set_privacy_mode(True),
     turn_off=lambda device: device.set_privacy_mode(False),
+)
+DETER_MODE = VivintSwitchEntityDescription(
+    key="deter_mode",
+    entity_category=EntityCategory.CONFIG,
+    name="Deter Mode",
+    is_on=lambda device: device.is_in_deter_mode,
+    turn_on=lambda device: device.set_deter_mode(True),
+    turn_off=lambda device: device.set_deter_mode(False),
 )
 
 
