@@ -11,6 +11,7 @@ from vivintpy.devices.switch import BinarySwitch
 from vivintpy.enums import (
     CapabilityCategoryType as Category,
     CapabilityType as Capability,
+    FeatureType as Feature,
 )
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
@@ -26,6 +27,13 @@ from .hub import VivintBaseEntity, VivintHub
 def has_capability(device: VivintDevice, category: Category, capability: Capability):
     """Check if a device has a capability."""
     if capability in (device.capabilities or {}).get(category, []):
+        return True
+    return False
+
+
+def has_feature(device: VivintDevice, feature: Feature):
+    """Check if a device has a feature."""
+    if feature in (device.features or {}):
         return True
     return False
 
@@ -62,13 +70,7 @@ async def async_setup_entry(
                             device=device, hub=hub, entity_description=PRIVACY_MODE
                         )
                     )
-                if has_capability(device, Category.CAMERA, Capability.DETER):
-                    entities.append(
-                        VivintSwitchEntity(
-                            device=device, hub=hub, entity_description=DETER_MODE
-                        )
-                    )
-                if has_capability(device, Category.DOORBELL, Capability.CAN_CHIME):
+                if has_feature(device, Feature.DETER):
                     entities.append(
                         VivintSwitchEntity(
                             device=device, hub=hub, entity_description=DETER_MODE
