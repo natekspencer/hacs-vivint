@@ -33,9 +33,7 @@ def has_capability(device: VivintDevice, category: Category, capability: Capabil
 
 def has_feature(device: VivintDevice, feature: Feature):
     """Check if a device has a feature."""
-    if feature in (device.features or {}):
-        return True
-    return False
+    return feature in (device.features or [])
 
 
 async def async_setup_entry(
