@@ -136,9 +136,7 @@ class VivintHub:
     def save_session(self) -> bool:
         """Save session for reuse."""
         # pylint: disable=protected-access
-        self.account.vivintskyapi._VivintSkyApi__client_session.cookie_jar.save(
-            self.cache_file
-        )
+        self.account.api._VivintSkyApi__client_session.cookie_jar.save(self.cache_file)
         self.logged_in = True
         return self.logged_in
 
