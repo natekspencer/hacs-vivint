@@ -1,0 +1,13 @@
+# Limited configuration instead of default_config
+# https://www.home-assistant.io/integrations/default_config
+automation:
+frontend:
+history:
+logbook:
+zeroconf:
+
+logger:
+  default: info
+  logs:
+    custom_components.vivint: debug
+    vivintpy: debug
