@@ -130,3 +130,9 @@ dmypy.json
 
 # VS Code Settings / Launch files
 .vscode/
+
+# MacOS
+.DS_Store
+
+# Home Assistant
+config/
