@@ -165,7 +165,6 @@ class VivintBaseEntity(CoordinatorEntity):
         )
         device = self.device.parent if self.device.is_subdevice else self.device
         self._attr_device_info = DeviceInfo(
-            default_manufacturer="Vivint",
             identifiers={get_device_id(device)},
             name=device.name if device.name else type(device).__name__,
             manufacturer=device.manufacturer,
@@ -197,7 +196,6 @@ class VivintEntity(CoordinatorEntity):
 
         device = self.device.parent if self.device.is_subdevice else self.device
         self._attr_device_info = DeviceInfo(
-            default_manufacturer="Vivint",
             identifiers={get_device_id(device)},
             name=device.name if device.name else type(device).__name__,
             manufacturer=device.manufacturer,
