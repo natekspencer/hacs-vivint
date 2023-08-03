@@ -10,6 +10,6 @@
   "issue_tracker": "https://github.com/natekspencer/hacs-vivint/issues",
   "loggers": ["custom_components.vivint", "vivintpy"],
   "requirements": ["vivintpy==2023.3.5"],
-  "version": "2023.6.0",
+  "version": "2023.8.0",
   "zeroconf": ["_vivint-ODC300._tcp.local.", "_vivint-DBC350._tcp.local."]
 }
