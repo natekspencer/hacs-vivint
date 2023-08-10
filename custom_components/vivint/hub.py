@@ -160,9 +160,8 @@ class VivintBaseEntity(CoordinatorEntity):
         self.hub = hub
         self.entity_description = entity_description
 
-        self._attr_unique_id = (
-            f"{device.alarm_panel.id}-{device.id}-{entity_description.key}"
-        )
+        prefix = f"{device.alarm_panel.id}-" if device.alarm_panel else ""
+        self._attr_unique_id = f"{prefix}{device.id}-{entity_description.key}"
         device = self.device.parent if self.device.is_subdevice else self.device
         self._attr_device_info = DeviceInfo(
             identifiers={get_device_id(device)},

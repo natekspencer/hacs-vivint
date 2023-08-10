@@ -36,6 +36,7 @@ PLATFORMS = [
     Platform.LOCK,
     Platform.SENSOR,
     Platform.SWITCH,
+    Platform.UPDATE,
 ]
 
 ATTR_TYPE = "type"
