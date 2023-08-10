@@ -5,6 +5,7 @@ from homeassistant.components.sensor import (
     DOMAIN as SENSOR_DOMAIN,
     SensorDeviceClass,
     SensorEntity,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
@@ -68,6 +69,7 @@ class VivintBatterySensorEntity(VivintEntity, SensorEntity):
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
     def name(self) -> str:
