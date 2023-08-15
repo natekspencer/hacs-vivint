@@ -43,7 +43,7 @@ async def async_setup_entry(
         if system.is_admin
         for alarm_panel in system.alarm_panels
     ]
-    async_add_entities(entities, True)
+    async_add_entities(entities)
 
 
 class VivintUpdateEntity(VivintBaseEntity, UpdateEntity):
