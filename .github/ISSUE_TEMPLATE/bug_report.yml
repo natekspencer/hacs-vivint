@@ -1,0 +1,67 @@
+name: Report an issue with the Vivint integration
+description: Report an issue with the Vivint integration.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting an issue:
+          1. Validate you are running the [latest version of the integration](https://github.com/natekspencer/hacs-vivint/releases)
+          2. Open the official Vivint app and test if the same functionality works there
+          3. Search [existing issues](https://github.com/natekspencer/hacs-vivint/issues) (open and recently closed) to see if what you are experiencing has already been reported
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: The problem
+      description: >-
+        Describe the issue you are experiencing here. What were you trying to do and what happened?
+
+        Provide a clear and concise description of what the problem is.
+  - type: markdown
+    attributes:
+      value: |
+        ## Environment
+  - type: input
+    id: version
+    validations:
+      required: true
+    attributes:
+      label: What version of Home Assistant Core are you running?
+      placeholder: core-
+      description: >
+        Can be found in: [Settings ⇒ System ⇒ Repairs ⇒ Three Dots in Upper Right ⇒ System information](https://my.home-assistant.io/redirect/system_health/).
+
+        [![Open your Home Assistant instance and show the system information.](https://my.home-assistant.io/badges/system_health.svg)](https://my.home-assistant.io/redirect/system_health/)
+  - type: input
+    attributes:
+      label: What was the last working version of Home Assistant Core?
+      placeholder: core-
+      description: >
+        If known, otherwise leave blank.
+  - type: markdown
+    attributes:
+      value: |
+        ## Details
+  # - type: textarea
+  #   attributes:
+  #     label: Diagnostics information
+  #     placeholder: "drag-and-drop the diagnostics data file here (do not copy-and-paste the content)"
+  #     description: >-
+  #       This integration provides the ability to [download diagnostic data](https://www.home-assistant.io/docs/configuration/troubleshooting/#debug-logs-and-diagnostics).
+
+  #       **It would really help if you could download the diagnostics data for the device you are having issues with,
+  #       and <ins>drag-and-drop that file into the textbox below.</ins>**
+
+  #       It generally allows pinpointing defects and thus resolving issues faster.
+  - type: textarea
+    attributes:
+      label: Anything in the logs that might be useful?
+      description: >-
+        For example, error message, or stack traces.
+        If you [enable debug logging](https://www.home-assistant.io/docs/configuration/troubleshooting/#debug-logs-and-diagnostics), this will provide more details.
+      render: txt
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: >
+        If you have any additional information, use the field below.

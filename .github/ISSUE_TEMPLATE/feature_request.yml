@@ -1,0 +1,21 @@
+name: Request a feature
+description: Suggest an idea or request a missing feature.
+body:
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: The request
+      description: >-
+        Is there a feature available in the Vivint app that is missing here or you wish was done differently? Let me know!
+  - type: textarea
+    attributes:
+      label: Screenshots
+      placeholder: "drag-and-drop relevant screenshots here"
+      description: >-
+        Please provide any relevant screenshots from the Vivint app for the requested feature.
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: >
+        If you have any additional information, such as device type or model numbers, use the field below.
