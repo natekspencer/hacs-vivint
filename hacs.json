@@ -1,6 +1,5 @@
 {
   "name": "Vivint",
-  "render_readme": true,
   "domains": [
     "alarm_control_panel",
     "binary_sensor",
@@ -12,6 +11,9 @@
     "sensor",
     "switch"
   ],
+  "homeassistant": "2022.4.0",
   "iot_class": "Cloud Polling",
-  "homeassistant": "2022.4.0"
+  "render_readme": true,
+  "zip_release": true,
+  "filename": "vivint.zip"
 }
