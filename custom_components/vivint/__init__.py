@@ -29,6 +29,7 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [
     Platform.ALARM_CONTROL_PANEL,
     Platform.BINARY_SENSOR,
+    Platform.BUTTON,
     Platform.CAMERA,
     Platform.CLIMATE,
     Platform.COVER,
@@ -110,7 +111,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         ),
                     )
                 )
-                if CapabilityCategoryType.DOORBELL in device.capabilities.keys():
+                if CapabilityCategoryType.DOORBELL in device.capabilities:
                     entry.async_on_unload(
                         device.on(
                             DOORBELL_DING,
