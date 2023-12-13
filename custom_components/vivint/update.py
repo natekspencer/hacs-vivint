@@ -33,7 +33,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Litter-Robot update platform."""
+    """Set up Vivint update platform."""
     hub: VivintHub = hass.data[DOMAIN][entry.entry_id]
     entities = [
         VivintUpdateEntity(
@@ -43,7 +43,7 @@ async def async_setup_entry(
         if system.is_admin
         for alarm_panel in system.alarm_panels
     ]
-    async_add_entities(entities)
+    async_add_entities(entities, True)
 
 
 class VivintUpdateEntity(VivintBaseEntity, UpdateEntity):
