@@ -56,7 +56,10 @@ class VivintUpdateEntity(VivintBaseEntity, UpdateEntity):
     @property
     def in_progress(self) -> bool:
         """Update installation progress."""
-        return self.device._AlarmPanel__panel.data["sus"] != "Idle"
+        return self.device._AlarmPanel__panel.data["sus"] not in (
+            "Idle",
+            "Reboot Pending",
+        )
 
     @property
     def installed_version(self) -> str:
