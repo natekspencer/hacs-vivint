@@ -3,15 +3,17 @@
   "domains": [
     "alarm_control_panel",
     "binary_sensor",
+    "button",
     "camera",
     "climate",
     "cover",
     "light",
     "lock",
     "sensor",
-    "switch"
+    "switch",
+    "update"
   ],
-  "homeassistant": "2022.4.0",
+  "homeassistant": "2023.8.0",
   "iot_class": "Cloud Polling",
   "render_readme": true,
   "zip_release": true,
