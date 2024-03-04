@@ -112,7 +112,7 @@ class VivintConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._hub = VivintHub(self.hass, user_input)
         try:
-            await self._hub.login(load_devices=True)
+            await self._hub.login(load_devices=True, use_cache=False)
         except VivintSkyApiMfaRequiredError:
             return await self.async_step_mfa()
         except VivintSkyApiAuthenticationError:

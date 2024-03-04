@@ -9,7 +9,7 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/natekspencer/hacs-vivint/issues",
   "loggers": ["custom_components.vivint", "vivintpy"],
-  "requirements": ["vivintpy==2023.3.7"],
+  "requirements": ["vivintpy==2023.3.8"],
   "version": "0.0.0",
   "zeroconf": ["_vivint-ODC300._tcp.local.", "_vivint-DBC350._tcp.local."]
 }
