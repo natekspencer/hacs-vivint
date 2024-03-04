@@ -74,17 +74,21 @@ class VivintHub:
         )
 
     async def login(
-        self, load_devices: bool = False, subscribe_for_realtime_updates: bool = False
+        self,
+        load_devices: bool = False,
+        subscribe_for_realtime_updates: bool = False,
+        use_cache: bool = True,
     ) -> bool:
         """Login to Vivint."""
         self.logged_in = False
 
         # Get previous session if available
         abs_cookie_jar = aiohttp.CookieJar()
-        try:
-            abs_cookie_jar.load(self.cache_file)
-        except:  # pylint: disable=bare-except
-            _LOGGER.debug("No previous session found")
+        if use_cache:
+            try:
+                abs_cookie_jar.load(self.cache_file)
+            except:  # pylint: disable=bare-except
+                _LOGGER.debug("No previous session found")
 
         self.session = ClientSession(cookie_jar=abs_cookie_jar)
 
