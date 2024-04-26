@@ -1,7 +1,6 @@
 {
   "name": "Vivint",
   "homeassistant": "2023.8.0",
-  "iot_class": "Cloud Polling",
   "render_readme": true,
   "zip_release": true,
   "filename": "vivint.zip"
