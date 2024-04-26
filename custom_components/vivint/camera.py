@@ -1,4 +1,5 @@
 """Support for Vivint cameras."""
+
 from __future__ import annotations
 
 import logging
@@ -21,7 +22,7 @@ from .const import (
     DEFAULT_RTSP_URL_LOGGING,
     DOMAIN,
     RTSP_STREAM_DIRECT,
-    RTSP_STREAM_EXTERNAL,
+    RTSP_STREAM_INTERNAL,
 )
 from .hub import VivintEntity, VivintHub
 
@@ -103,7 +104,6 @@ class VivintCameraEntity(VivintEntity, Camera):
 
         self.__hd_stream = hd_stream
         self.__rtsp_stream = rtsp_stream
-        self.__stream_source = None
         self.__last_image = None
 
     @property
@@ -113,15 +113,13 @@ class VivintCameraEntity(VivintEntity, Camera):
 
     async def stream_source(self) -> str | None:
         """Return the source of the stream."""
-        if not self.__stream_source:
-            self.__stream_source = (
-                await self.device.get_direct_rtsp_url(hd=self.__hd_stream)
-                if self.__rtsp_stream == RTSP_STREAM_DIRECT
-                else None
-            ) or await self.device.get_rtsp_url(
-                internal=self.__rtsp_stream != RTSP_STREAM_EXTERNAL, hd=self.__hd_stream
+        await self.device.alarm_panel.get_panel_credentials()
+        url = self.device.get_rtsp_access_url(self.__rtsp_stream, self.__hd_stream)
+        if not url and self.__rtsp_stream == RTSP_STREAM_DIRECT:
+            url = self.device.get_rtsp_access_url(
+                RTSP_STREAM_INTERNAL, self.__hd_stream
             )
-        return self.__stream_source
+        return url
 
     async def async_camera_image(
         self, width: int | None = None, height: int | None = None

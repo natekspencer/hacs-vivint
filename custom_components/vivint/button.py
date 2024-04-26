@@ -1,8 +1,14 @@
 """Support for Vivint buttons."""
+
 from __future__ import annotations
 
 from vivintpy.devices.alarm_panel import AlarmPanel
+from vivintpy.devices.camera import Camera as VivintCamera
 from vivintpy.entity import UPDATE
+from vivintpy.enums import (
+    CapabilityCategoryType as Category,
+    CapabilityType as Capability,
+)
 
 from homeassistant.components.button import (
     ButtonDeviceClass,
@@ -14,9 +20,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .hub import VivintBaseEntity, VivintHub
+from .hub import VivintBaseEntity, VivintHub, has_capability
 
-HUB_REBOOT_ENTITY = ButtonEntityDescription(
+REBOOT_ENTITY = ButtonEntityDescription(
     key="reboot", device_class=ButtonDeviceClass.RESTART
 )
 
@@ -30,24 +36,36 @@ async def async_setup_entry(
     hub: VivintHub = hass.data[DOMAIN][entry.entry_id]
     entities = [
         VivintButtonEntity(
-            device=alarm_panel, hub=hub, entity_description=HUB_REBOOT_ENTITY
+            device=alarm_panel, hub=hub, entity_description=REBOOT_ENTITY
         )
         for system in hub.account.systems
         if system.is_admin
         for alarm_panel in system.alarm_panels
     ]
+    entities.extend(
+        VivintButtonEntity(device=device, hub=hub, entity_description=REBOOT_ENTITY)
+        for system in hub.account.systems
+        for alarm_panel in system.alarm_panels
+        for device in alarm_panel.devices
+        if isinstance(device, VivintCamera)
+        and has_capability(device, Category.CAMERA, Capability.REBOOT_CAMERA)
+    )
     async_add_entities(entities)
 
 
 class VivintButtonEntity(VivintBaseEntity, ButtonEntity):
     """A class that describes device button entities."""
 
-    device: AlarmPanel
+    device: AlarmPanel | VivintCamera
 
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        return super().available and self.device._AlarmPanel__panel.data["can_reboot"]
+        if isinstance(self.device, AlarmPanel):
+            return (
+                super().available and self.device._AlarmPanel__panel.data["can_reboot"]
+            )
+        return super().available
 
     async def async_press(self) -> None:
         """Handle the button press."""
@@ -56,8 +74,9 @@ class VivintButtonEntity(VivintBaseEntity, ButtonEntity):
     async def async_added_to_hass(self) -> None:
         """Set up a listener for the entity."""
         await super().async_added_to_hass()
-        self.async_on_remove(
-            self.device._AlarmPanel__panel.on(
-                UPDATE, lambda _: self.async_write_ha_state()
+        if isinstance(self.device, AlarmPanel):
+            self.async_on_remove(
+                self.device._AlarmPanel__panel.on(
+                    UPDATE, lambda _: self.async_write_ha_state()
+                )
             )
-        )

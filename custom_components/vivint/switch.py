@@ -1,11 +1,11 @@
 """Support for Vivint switches."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from vivintpy.devices import VivintDevice
 from vivintpy.devices.camera import Camera
 from vivintpy.devices.switch import BinarySwitch
 from vivintpy.enums import (
@@ -21,19 +21,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .hub import VivintBaseEntity, VivintHub
-
-
-def has_capability(device: VivintDevice, category: Category, capability: Capability):
-    """Check if a device has a capability."""
-    if capability in (device.capabilities or {}).get(category, []):
-        return True
-    return False
-
-
-def has_feature(device: VivintDevice, feature: Feature):
-    """Check if a device has a feature."""
-    return feature in (device.features or [])
+from .hub import VivintBaseEntity, VivintHub, has_capability, has_feature
 
 
 async def async_setup_entry(
