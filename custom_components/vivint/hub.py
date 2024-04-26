@@ -1,4 +1,5 @@
 """A wrapper 'hub' for the Vivint API and base entity for common attributes."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -15,6 +16,11 @@ from vivintpy.account import Account
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.alarm_panel import AlarmPanel
 from vivintpy.entity import UPDATE
+from vivintpy.enums import (
+    CapabilityCategoryType as Category,
+    CapabilityType as Capability,
+    FeatureType as Feature,
+)
 from vivintpy.exceptions import (
     VivintSkyApiAuthenticationError,
     VivintSkyApiError,
@@ -45,6 +51,18 @@ def get_device_id(device: VivintDevice) -> tuple[str, str]:
         DOMAIN,
         f"{device.panel_id}-{device.parent.id if device.is_subdevice else device.id}",
     )
+
+
+def has_capability(device: VivintDevice, category: Category, capability: Capability):
+    """Check if a device has a capability."""
+    if capability in (device.capabilities or {}).get(category, []):
+        return True
+    return False
+
+
+def has_feature(device: VivintDevice, feature: Feature):
+    """Check if a device has a feature."""
+    return feature in (device.features or [])
 
 
 class VivintHub:
@@ -173,9 +191,11 @@ class VivintBaseEntity(CoordinatorEntity):
             manufacturer=device.manufacturer,
             model=device.model,
             sw_version=device.software_version,
-            via_device=None
-            if isinstance(device, AlarmPanel)
-            else get_device_id(device.alarm_panel),
+            via_device=(
+                None
+                if isinstance(device, AlarmPanel)
+                else get_device_id(device.alarm_panel)
+            ),
         )
 
     async def async_added_to_hass(self) -> None:
@@ -204,9 +224,11 @@ class VivintEntity(CoordinatorEntity):
             manufacturer=device.manufacturer,
             model=device.model,
             sw_version=device.software_version,
-            via_device=None
-            if isinstance(device, AlarmPanel)
-            else get_device_id(device.alarm_panel),
+            via_device=(
+                None
+                if isinstance(device, AlarmPanel)
+                else get_device_id(device.alarm_panel)
+            ),
         )
 
     async def async_added_to_hass(self) -> None:
