@@ -6,6 +6,16 @@ history:
 logbook:
 zeroconf:
 
+homeassistant:
+  name: HACS-Vivint
+  auth_providers:
+    - type: trusted_networks
+      trusted_networks:
+        - 127.0.0.1
+        - ::1
+      allow_bypass_login: true
+    - type: homeassistant
+
 logger:
   default: info
   logs:
