@@ -9,25 +9,22 @@
     "vscode": {
       "extensions": [
         "ms-python.python",
-        "ms-python.black-formatter",
         "ms-python.vscode-pylance",
-        "ms-python.isort",
-        "ms-python.pylint",
         "esbenp.prettier-vscode",
         "github.vscode-pull-request-github",
-        "ryanluker.vscode-coverage-gutters"
+        "ryanluker.vscode-coverage-gutters",
+        "charliermarsh.ruff"
       ],
       "settings": {
         "files.eol": "\n",
         "editor.tabSize": 4,
         "python.pythonPath": "/usr/bin/python3",
         "python.analysis.autoSearchPaths": false,
-        "python.formatting.provider": "black",
         "editor.formatOnPaste": false,
         "editor.formatOnSave": true,
         "editor.formatOnType": true,
         "editor.codeActionsOnSave": {
-          "source.organizeImports": true
+          "source.organizeImports": "always"
         },
         "files.trimTrailingWhitespace": true
       }
