@@ -1,4 +1,6 @@
 ![Release](https://img.shields.io/github/v/release/natekspencer/hacs-vivint?style=for-the-badge)
+![Downloads](https://img.shields.io/github/downloads/natekspencer/hacs-vivint/total?style=for-the-badge)
+![Latest Downloads](https://img.shields.io/github/downloads/natekspencer/hacs-vivint/latest/total?style=for-the-badge)
 [![Buy Me A Coffee/Beer](https://img.shields.io/badge/Buy_Me_A_☕/🍺-F16061?style=for-the-badge&logo=ko-fi&logoColor=white&labelColor=grey)](https://ko-fi.com/natekspencer)
 
 <picture>

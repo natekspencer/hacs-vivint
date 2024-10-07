@@ -1,4 +1,5 @@
 """Support for Vivint thermostats."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -23,12 +24,11 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from . import VivintConfigEntry
 from .hub import VivintEntity, VivintHub
 
 # Map Vivint HVAC Mode to Home Assistant value
@@ -93,12 +93,12 @@ VIVINT_HVAC_STATUS_MAP = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    entry: VivintConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Vivint climate using config entry."""
     entities = []
-    hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
+    hub: VivintHub = entry.runtime_data
 
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:

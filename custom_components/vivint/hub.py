@@ -5,13 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import timedelta
 import logging
-import os
 
-import aiohttp
 from aiohttp import ClientResponseError
 from aiohttp.client import ClientSession
 from aiohttp.client_exceptions import ClientConnectorError
-from awesomeversion import AwesomeVersion as AweVer
 from vivintpy.account import Account
 from vivintpy.devices import VivintDevice
 from vivintpy.devices.alarm_panel import AlarmPanel
@@ -35,12 +32,10 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from .const import DOMAIN
+from .const import CONF_REFRESH_TOKEN, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CACHE_VERSION = "_1" if AweVer(aiohttp.__version__) >= AweVer("3.8.4") else ""
-DEFAULT_CACHEDB = f".vivintpy_cache{CACHE_VERSION}.pickle"
 UPDATE_INTERVAL = 300
 
 
@@ -76,8 +71,7 @@ class VivintHub:
         self.__undo_listener = undo_listener
         self.account: Account = None
         self.logged_in = False
-        self.session: ClientSession = None
-        self.cache_file = hass.config.path(DEFAULT_CACHEDB)
+        self.session = ClientSession()
 
         async def _async_update_data() -> None:
             """Update all device states from the Vivint API."""
@@ -92,28 +86,15 @@ class VivintHub:
         )
 
     async def login(
-        self,
-        load_devices: bool = False,
-        subscribe_for_realtime_updates: bool = False,
-        use_cache: bool = True,
+        self, load_devices: bool = False, subscribe_for_realtime_updates: bool = False
     ) -> bool:
         """Login to Vivint."""
         self.logged_in = False
 
-        # Get previous session if available
-        abs_cookie_jar = aiohttp.CookieJar()
-        if use_cache:
-            try:
-                abs_cookie_jar.load(self.cache_file)
-            except:  # pylint: disable=bare-except
-                _LOGGER.debug("No previous session found")
-
-        self.session = ClientSession(cookie_jar=abs_cookie_jar)
-
         self.account = Account(
             username=self._data[CONF_USERNAME],
             password=self._data[CONF_PASSWORD],
-            persist_session=True,
+            refresh_token=self._data.get(CONF_REFRESH_TOKEN),
             client_session=self.session,
         )
         try:
@@ -131,14 +112,12 @@ class VivintHub:
             _LOGGER.error("Unable to connect to the Vivint API")
             raise ex
 
-    async def disconnect(self, remove_cache: bool = False) -> None:
+    async def disconnect(self) -> None:
         """Disconnect from Vivint, close the session and optionally remove cache."""
         if self.account.connected:
             await self.account.disconnect()
         if not self.session.closed:
             await self.session.close()
-        if remove_cache:
-            self.remove_cache_file()
         if self.__undo_listener:
             self.__undo_listener()
             self.__undo_listener = None
@@ -151,14 +130,8 @@ class VivintHub:
         except Exception as ex:
             raise ex
 
-    def remove_cache_file(self) -> None:
-        """Remove the cached session file."""
-        os.remove(self.cache_file)
-
     def save_session(self) -> bool:
         """Save session for reuse."""
-        # pylint: disable=protected-access
-        self.account.api._VivintSkyApi__client_session.cookie_jar.save(self.cache_file)
         self.logged_in = True
         return self.logged_in
 

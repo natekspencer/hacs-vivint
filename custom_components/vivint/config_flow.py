@@ -1,4 +1,5 @@
 """Config flow for Vivint integration."""
+
 from __future__ import annotations
 
 import logging
@@ -29,6 +30,7 @@ from .const import (
     CONF_DISARM_CODE,
     CONF_HD_STREAM,
     CONF_MFA,
+    CONF_REFRESH_TOKEN,
     CONF_RTSP_STREAM,
     CONF_RTSP_URL_LOGGING,
     DEFAULT_HD_STREAM,
@@ -77,6 +79,7 @@ class VivintConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Vivint."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
     def __init__(self) -> None:
         """Initialize a config flow."""
@@ -90,6 +93,7 @@ class VivintConfigFlow(ConfigFlow, domain=DOMAIN):
         config_data = {
             CONF_USERNAME: self._hub._data[CONF_USERNAME],
             CONF_PASSWORD: self._hub._data[CONF_PASSWORD],
+            CONF_REFRESH_TOKEN: self._hub.account.refresh_token,
         }
 
         await self._hub.disconnect()
@@ -112,7 +116,7 @@ class VivintConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._hub = VivintHub(self.hass, user_input)
         try:
-            await self._hub.login(load_devices=True, use_cache=False)
+            await self._hub.login(load_devices=True)
         except VivintSkyApiMfaRequiredError:
             return await self.async_step_mfa()
         except VivintSkyApiAuthenticationError:
@@ -197,6 +201,6 @@ class VivintConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> SchemaOptionsFlowHandler:
+    def async_get_options_flow(entry: ConfigEntry) -> SchemaOptionsFlowHandler:
         """Get the options flow for this handler."""
-        return SchemaOptionsFlowHandler(config_entry, OPTIONS_FLOW)
+        return SchemaOptionsFlowHandler(entry, OPTIONS_FLOW)

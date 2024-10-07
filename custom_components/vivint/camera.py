@@ -8,11 +8,11 @@ from vivintpy.devices.camera import Camera as VivintCamera
 
 from homeassistant.components.camera import Camera, CameraEntityFeature
 from homeassistant.components.ffmpeg import async_get_image
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, format_mac
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from . import VivintConfigEntry
 from .const import (
     CONF_HD_STREAM,
     CONF_RTSP_STREAM,
@@ -20,7 +20,6 @@ from .const import (
     DEFAULT_HD_STREAM,
     DEFAULT_RTSP_STREAM,
     DEFAULT_RTSP_URL_LOGGING,
-    DOMAIN,
     RTSP_STREAM_DIRECT,
     RTSP_STREAM_INTERNAL,
 )
@@ -31,16 +30,16 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    entry: VivintConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Vivint cameras using config entry."""
     entities = []
-    hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
+    hub: VivintHub = entry.runtime_data
 
-    hd_stream = config_entry.options.get(CONF_HD_STREAM, DEFAULT_HD_STREAM)
-    rtsp_stream = config_entry.options.get(CONF_RTSP_STREAM, DEFAULT_RTSP_STREAM)
-    rtsp_url_logging = config_entry.options.get(
+    hd_stream = entry.options.get(CONF_HD_STREAM, DEFAULT_HD_STREAM)
+    rtsp_stream = entry.options.get(CONF_RTSP_STREAM, DEFAULT_RTSP_STREAM)
+    rtsp_url_logging = entry.options.get(
         CONF_RTSP_URL_LOGGING, DEFAULT_RTSP_URL_LOGGING
     )
 

@@ -1,4 +1,5 @@
 """Provides device triggers for Vivint."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -12,10 +13,11 @@ from homeassistant.components.device_automation import DEVICE_TRIGGER_BASE_SCHEM
 from homeassistant.components.homeassistant.triggers import event as event_trigger
 from homeassistant.const import CONF_DEVICE_ID, CONF_DOMAIN, CONF_PLATFORM, CONF_TYPE
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import config_entry_flow, device_registry as dr
 from homeassistant.helpers.trigger import TriggerActionType, TriggerInfo
 from homeassistant.helpers.typing import ConfigType
 
+from . import VivintConfigEntry
 from .const import DOMAIN, EVENT_TYPE
 from .hub import VivintHub
 
@@ -42,10 +44,11 @@ async def async_get_vivint_device(
 
     [panel_id, vivint_device_id] = [int(item) for item in identifier.split("-")]
     for config_entry_id in device_entry.config_entries:
-        if config_entry_id not in hass.data[DOMAIN]:
+        config_entry: VivintConfigEntry | None
+        if not (config_entry := hass.config_entries.async_get_entry(config_entry_id)):
             continue
 
-        hub: VivintHub = hass.data[DOMAIN][config_entry_id]
+        hub: VivintHub = config_entry.runtime_data
         for system in hub.account.systems:
             if system.id != panel_id:
                 continue
