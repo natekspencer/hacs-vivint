@@ -1,4 +1,5 @@
 """Support for Vivint updates."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -13,12 +14,11 @@ from homeassistant.components.update import (
     UpdateEntityDescription,
     UpdateEntityFeature as Feature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from . import VivintConfigEntry
 from .hub import VivintBaseEntity, VivintHub
 
 SCAN_INTERVAL = timedelta(days=1)
@@ -30,11 +30,11 @@ FIRMWARE_UPDATE_ENTITY = UpdateEntityDescription(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: VivintConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Vivint update platform."""
-    hub: VivintHub = hass.data[DOMAIN][entry.entry_id]
+    hub: VivintHub = entry.runtime_data
     entities = [
         VivintUpdateEntity(
             device=alarm_panel, hub=hub, entity_description=FIRMWARE_UPDATE_ENTITY

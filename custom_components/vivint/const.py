@@ -1,4 +1,5 @@
 """Constants for the Vivint integration."""
+
 DOMAIN = "vivint"
 EVENT_TYPE = f"{DOMAIN}_event"
 
@@ -12,6 +13,7 @@ RTSP_STREAM_TYPES = {
 }
 
 CONF_MFA = "code"
+CONF_REFRESH_TOKEN = "refresh_token"
 CONF_DISARM_CODE = "disarm_code"
 CONF_HD_STREAM = "hd_stream"
 CONF_RTSP_STREAM = "rtsp_stream"

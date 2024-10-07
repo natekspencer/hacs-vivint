@@ -1,4 +1,5 @@
 """Support for Vivint binary sensors."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -16,7 +17,6 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import EntityCategory
@@ -24,6 +24,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_call_later
 from homeassistant.util.dt import utcnow
 
+from . import VivintConfigEntry
 from .const import DOMAIN
 from .hub import VivintBaseEntity, VivintEntity, VivintHub
 
@@ -36,12 +37,12 @@ ENTITY_DESCRIPTION_MOTION = BinarySensorEntityDescription(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    entry: VivintConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Vivint binary sensors using config entry."""
     entities = []
-    hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
+    hub: VivintHub = entry.runtime_data
 
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:
@@ -87,10 +88,10 @@ async def async_setup_entry(
 
         async_add_entities(entities)
 
-    config_entry.async_on_unload(
+    entry.async_on_unload(
         async_dispatcher_connect(
             hass,
-            f"{DOMAIN}_{config_entry.entry_id}_add_{PLATFORM_DOMAIN}",
+            f"{DOMAIN}_{entry.entry_id}_add_{PLATFORM_DOMAIN}",
             async_add_sensor,
         )
     )

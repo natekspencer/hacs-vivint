@@ -15,11 +15,10 @@ from homeassistant.components.button import (
     ButtonEntity,
     ButtonEntityDescription,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from . import VivintConfigEntry
 from .hub import VivintBaseEntity, VivintHub, has_capability
 
 REBOOT_ENTITY = ButtonEntityDescription(
@@ -29,11 +28,11 @@ REBOOT_ENTITY = ButtonEntityDescription(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: VivintConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Vivint button platform."""
-    hub: VivintHub = hass.data[DOMAIN][entry.entry_id]
+    hub: VivintHub = entry.runtime_data
     entities = [
         VivintButtonEntity(
             device=alarm_panel, hub=hub, entity_description=REBOOT_ENTITY

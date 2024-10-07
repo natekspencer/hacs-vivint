@@ -15,23 +15,22 @@ from vivintpy.enums import (
 )
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from . import VivintConfigEntry
 from .hub import VivintBaseEntity, VivintHub, has_capability, has_feature
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    entry: VivintConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Vivint switches using config entry."""
     entities = []
-    hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
+    hub: VivintHub = entry.runtime_data
 
     for system in hub.account.systems:
         for alarm_panel in system.alarm_panels:

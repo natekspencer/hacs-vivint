@@ -1,4 +1,5 @@
 """Support for Vivint alarm control panel."""
+
 from __future__ import annotations
 
 from vivintpy.devices.alarm_panel import AlarmPanel
@@ -9,7 +10,6 @@ from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntityFeature as Feature,
     CodeFormat,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     STATE_ALARM_ARMED_AWAY,
     STATE_ALARM_ARMED_HOME,
@@ -22,7 +22,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from .const import CONF_DISARM_CODE, DOMAIN
+from . import VivintConfigEntry
+from .const import CONF_DISARM_CODE
 from .hub import VivintEntity, VivintHub
 
 ARMED_STATE_MAP = {
@@ -42,13 +43,13 @@ ARMED_STATE_MAP = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    entry: VivintConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Vivint alarm control panel using config entry."""
     entities = []
-    hub: VivintHub = hass.data[DOMAIN][config_entry.entry_id]
-    disarm_code = config_entry.options.get(CONF_DISARM_CODE)
+    hub: VivintHub = entry.runtime_data
+    disarm_code = entry.options.get(CONF_DISARM_CODE)
 
     for system in hub.account.systems:
         for device in system.alarm_panels:
@@ -78,14 +79,10 @@ class VivintAlarmControlPanelEntity(VivintEntity, AlarmControlPanelEntity):
     ) -> None:
         """Create the entity."""
         super().__init__(device, hub)
+        self._attr_unique_id = str(self.device.id)
         if disarm_code:
             self._attr_code_format = CodeFormat.NUMBER
             self._disarm_code = disarm_code
-
-    @property
-    def unique_id(self) -> str:
-        """Return a unique ID."""
-        return self.device.id
 
     @property
     def state(self) -> StateType:

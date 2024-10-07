@@ -1,5 +1,7 @@
 """The Vivint integration."""
+
 import logging
+import os
 
 from aiohttp import ClientResponseError
 from aiohttp.client_exceptions import ClientConnectorError
@@ -15,14 +17,22 @@ from vivintpy.exceptions import (
 )
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_DEVICE_ID, ATTR_DOMAIN, Platform
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.const import (
+    ATTR_DEVICE_ID,
+    ATTR_DOMAIN,
+    EVENT_HOMEASSISTANT_STOP,
+    Platform,
+)
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .const import DOMAIN, EVENT_TYPE
+from .const import CONF_REFRESH_TOKEN, DOMAIN, EVENT_TYPE
 from .hub import VivintHub, get_device_id
+
+type VivintConfigEntry = ConfigEntry[VivintHub]
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,12 +53,12 @@ PLATFORMS = [
 ATTR_TYPE = "type"
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: VivintConfigEntry) -> bool:
     """Set up Vivint from a config entry."""
     undo_listener = entry.add_update_listener(update_listener)
 
     hub = VivintHub(hass, entry.data, undo_listener)
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = hub
+    entry.runtime_data = hub
 
     try:
         await hub.login(load_devices=True, subscribe_for_realtime_updates=True)
@@ -144,26 +154,54 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if device not in known_devices:
             dev_reg.async_remove_device(device.id)
 
+    @callback
+    def _async_save_tokens(ev: Event) -> None:
+        """Save tokens to the config entry data."""
+        undo_listener()
+        hass.config_entries.async_update_entry(
+            entry, data=entry.data | {CONF_REFRESH_TOKEN: hub.account.refresh_token}
+        )
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_save_tokens)
+
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: VivintConfigEntry) -> bool:
     """Unload config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-
-    hub: VivintHub = hass.data[DOMAIN][entry.entry_id]
-    await hub.disconnect()
-
-    return unload_ok
+    await entry.runtime_data.disconnect()
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Handle removal of an entry."""
-    hub: VivintHub = hass.data[DOMAIN][entry.entry_id]
-    await hub.disconnect(remove_cache=True)
-    hass.data[DOMAIN].pop(entry.entry_id)
+async def async_migrate_entry(hass: HomeAssistant, entry: VivintConfigEntry) -> bool:
+    """Migrate old entry."""
+    _LOGGER.debug(
+        "Migrating configuration from version %s.%s", entry.version, entry.minor_version
+    )
+
+    if entry.version > 1:
+        # This means the user has downgraded from a future version
+        return False
+
+    if entry.version == 1:
+        if entry.minor_version < 2:
+            for filename in (".vivintpy_cache.pickle", ".vivintpy_cache_1.pickle"):
+                try:
+                    os.remove(hass.config.path(filename))
+                except Exception:
+                    pass
+
+            hass.config_entries.async_update_entry(entry, minor_version=2)
+
+    _LOGGER.debug(
+        "Migration to version %s.%s successful",
+        entry.version,
+        entry.minor_version,
+    )
+
+    return True
 
 
-async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def update_listener(hass: HomeAssistant, entry: VivintConfigEntry) -> None:
     """Handle options update."""
     await hass.config_entries.async_reload(entry.entry_id)

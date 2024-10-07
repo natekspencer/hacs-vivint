@@ -1,6 +1,5 @@
 # Home Assistant
 homeassistant>=2024.4
-home-assistant-frontend
 python-dateutil
 numpy
 
