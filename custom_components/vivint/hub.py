@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from datetime import timedelta
 import logging
@@ -72,6 +73,7 @@ class VivintHub:
         self.account: Account = None
         self.logged_in = False
         self.session = ClientSession()
+        self._lock = asyncio.Lock()
 
         async def _async_update_data() -> None:
             """Update all device states from the Vivint API."""
@@ -113,14 +115,15 @@ class VivintHub:
             raise ex
 
     async def disconnect(self) -> None:
-        """Disconnect from Vivint, close the session and optionally remove cache."""
-        if self.account.connected:
-            await self.account.disconnect()
-        if not self.session.closed:
-            await self.session.close()
-        if self.__undo_listener:
-            self.__undo_listener()
-            self.__undo_listener = None
+        """Disconnect from Vivint, close the session and stop listener."""
+        async with self._lock:
+            if self.account.connected:
+                await self.account.disconnect()
+            if not self.session.closed:
+                await self.session.close()
+            if self.__undo_listener:
+                self.__undo_listener()
+                self.__undo_listener = None
 
     async def verify_mfa(self, code: str) -> bool:
         """Verify MFA."""

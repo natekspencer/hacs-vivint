@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from typing import Iterable
+
 from vivintpy.devices.alarm_panel import AlarmPanel
 from vivintpy.enums import ArmedState
 
 from homeassistant.components.alarm_control_panel import (
+    DOMAIN as PLATFORM,
     AlarmControlPanelEntity,
     AlarmControlPanelEntityFeature as Feature,
     CodeFormat,
@@ -19,11 +22,12 @@ from homeassistant.const import (
     STATE_ALARM_TRIGGERED,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
 from . import VivintConfigEntry
-from .const import CONF_DISARM_CODE
+from .const import CONF_DISARM_CODE, DOMAIN
 from .hub import VivintEntity, VivintHub
 
 ARMED_STATE_MAP = {
@@ -61,6 +65,9 @@ async def async_setup_entry(
 
     if not entities:
         return
+
+    # Migrate unique ids
+    async_update_unique_id(hass, PLATFORM, entities)
 
     async_add_entities(entities)
 
@@ -105,3 +112,19 @@ class VivintAlarmControlPanelEntity(VivintEntity, AlarmControlPanelEntity):
     async def async_alarm_trigger(self, code: str | None = None) -> None:
         """Send alarm trigger command."""
         await self.device.trigger_alarm()
+
+
+# to be removed 2025-01
+def async_update_unique_id(
+    hass: HomeAssistant, domain: str, entities: Iterable[VivintAlarmControlPanelEntity]
+) -> None:
+    """Update unique ID to be based on VIN and entity description key instead of name."""
+    ent_reg = er.async_get(hass)
+    for entity in entities:
+        old_unique_id = int(entity.unique_id)
+        if entity_id := ent_reg.async_get_entity_id(domain, DOMAIN, old_unique_id):
+            if existing_entity_id := ent_reg.async_get_entity_id(
+                domain, DOMAIN, entity.unique_id
+            ):
+                ent_reg.async_remove(existing_entity_id)
+            ent_reg.async_update_entity(entity_id, new_unique_id=entity.unique_id)

@@ -155,9 +155,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: VivintConfigEntry) -> bo
             dev_reg.async_remove_device(device.id)
 
     @callback
-    def _async_save_tokens(ev: Event) -> None:
+    async def _async_save_tokens(ev: Event) -> None:
         """Save tokens to the config entry data."""
-        undo_listener()
+        await entry.runtime_data.disconnect()
         hass.config_entries.async_update_entry(
             entry, data=entry.data | {CONF_REFRESH_TOKEN: hub.account.refresh_token}
         )
