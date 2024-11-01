@@ -1,7 +1,8 @@
 # Home Assistant
-homeassistant>=2024.4
+homeassistant>=2024.11b
 python-dateutil
 numpy
+PyTurboJPEG
 
 # Integration
 vivintpy

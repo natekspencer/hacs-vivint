@@ -11,37 +11,29 @@ from homeassistant.components.alarm_control_panel import (
     DOMAIN as PLATFORM,
     AlarmControlPanelEntity,
     AlarmControlPanelEntityFeature as Feature,
+    AlarmControlPanelState,
     CodeFormat,
-)
-from homeassistant.const import (
-    STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_HOME,
-    STATE_ALARM_ARMING,
-    STATE_ALARM_DISARMED,
-    STATE_ALARM_PENDING,
-    STATE_ALARM_TRIGGERED,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import StateType
 
 from . import VivintConfigEntry
 from .const import CONF_DISARM_CODE, DOMAIN
 from .hub import VivintEntity, VivintHub
 
 ARMED_STATE_MAP = {
-    ArmedState.DISARMED: STATE_ALARM_DISARMED,
-    ArmedState.ARMING_AWAY_IN_EXIT_DELAY: STATE_ALARM_ARMING,
-    ArmedState.ARMING_STAY_IN_EXIT_DELAY: STATE_ALARM_ARMING,
-    ArmedState.ARMED_STAY: STATE_ALARM_ARMED_HOME,
-    ArmedState.ARMED_AWAY: STATE_ALARM_ARMED_AWAY,
-    ArmedState.ARMED_STAY_IN_ENTRY_DELAY: STATE_ALARM_PENDING,
-    ArmedState.ARMED_AWAY_IN_ENTRY_DELAY: STATE_ALARM_PENDING,
-    ArmedState.ALARM: STATE_ALARM_TRIGGERED,
-    ArmedState.ALARM_FIRE: STATE_ALARM_TRIGGERED,
-    ArmedState.DISABLED: STATE_ALARM_DISARMED,
-    ArmedState.WALK_TEST: STATE_ALARM_DISARMED,
+    ArmedState.DISARMED: AlarmControlPanelState.DISARMED,
+    ArmedState.ARMING_AWAY_IN_EXIT_DELAY: AlarmControlPanelState.ARMING,
+    ArmedState.ARMING_STAY_IN_EXIT_DELAY: AlarmControlPanelState.ARMING,
+    ArmedState.ARMED_STAY: AlarmControlPanelState.ARMED_HOME,
+    ArmedState.ARMED_AWAY: AlarmControlPanelState.ARMED_AWAY,
+    ArmedState.ARMED_STAY_IN_ENTRY_DELAY: AlarmControlPanelState.PENDING,
+    ArmedState.ARMED_AWAY_IN_ENTRY_DELAY: AlarmControlPanelState.PENDING,
+    ArmedState.ALARM: AlarmControlPanelState.TRIGGERED,
+    ArmedState.ALARM_FIRE: AlarmControlPanelState.TRIGGERED,
+    ArmedState.DISABLED: AlarmControlPanelState.DISARMED,
+    ArmedState.WALK_TEST: AlarmControlPanelState.DISARMED,
 }
 
 
@@ -92,8 +84,8 @@ class VivintAlarmControlPanelEntity(VivintEntity, AlarmControlPanelEntity):
             self._disarm_code = disarm_code
 
     @property
-    def state(self) -> StateType:
-        """Return the state of the alarm control panel."""
+    def alarm_state(self) -> AlarmControlPanelState | None:
+        """Return the current alarm control panel entity state."""
         return ARMED_STATE_MAP.get(self.device.state)
 
     async def async_alarm_disarm(self, code: str | None = None) -> None:
