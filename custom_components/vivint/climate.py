@@ -71,6 +71,7 @@ VIVINT_CAPABILITY_FAN_MODE_MAP = {
 
 VIVINT_FAN_MODE_MAP = {
     FanMode.AUTO_LOW: FAN_AUTO,
+    FanMode.ON_LOW: FAN_ON,
     FanMode.TIMER_15: "15 minutes",
     FanMode.TIMER_30: "30 minutes",
     FanMode.TIMER_45: "45 minutes",
