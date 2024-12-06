@@ -118,8 +118,11 @@ class VivintClimate(VivintEntity, ClimateEntity):
     device: Thermostat
 
     _attr_hvac_modes = [HVACMode.COOL, HVACMode.HEAT, HVACMode.HEAT_COOL, HVACMode.OFF]
+    _enable_turn_on_off_backwards_compatibility = False
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
+        | ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.TURN_ON
         | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
         | ClimateEntityFeature.FAN_MODE
     )
@@ -208,6 +211,14 @@ class VivintClimate(VivintEntity, ClimateEntity):
                 )
             }
         )
+
+    async def async_turn_off(self) -> None:
+        """Turn off fan."""
+        await self.async_set_hvac_mode(HVACMode.OFF)
+
+    async def async_turn_on(self) -> None:
+        """Turn on fan."""
+        await self.async_set_hvac_mode(HVACMode.HEATING)
 
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
         """Set new target hvac mode."""
