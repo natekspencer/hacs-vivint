@@ -125,8 +125,8 @@ class VivintClimate(VivintEntity, ClimateEntity):
         | ClimateEntityFeature.TURN_ON
         | ClimateEntityFeature.TURN_OFF
     )
-    _enable_turn_on_off_backwards_compatibility = False
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(self, device: Thermostat, hub: VivintHub) -> None:
         """Pass coordinator to CoordinatorEntity."""
@@ -211,7 +211,6 @@ class VivintClimate(VivintEntity, ClimateEntity):
                 )
             }
         )
-
 
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
         """Set new target hvac mode."""
