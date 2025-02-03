@@ -3,6 +3,7 @@
 automation:
 frontend:
 history:
+isal:
 logbook:
 zeroconf:
 
@@ -22,3 +23,4 @@ logger:
   logs:
     custom_components.vivint: debug
     vivintpy: debug
+    pubnub: debug

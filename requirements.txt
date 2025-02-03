@@ -1,5 +1,5 @@
 # Home Assistant
-homeassistant>=2024.11b
+homeassistant>=2025.1
 python-dateutil
 numpy
 PyTurboJPEG
