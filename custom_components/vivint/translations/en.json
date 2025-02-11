@@ -5,6 +5,9 @@
         "data": {
           "username": "Username",
           "password": "Password"
+        },
+        "data_description": {
+          "username": "The email address you use to login to Vivint"
         }
       },
       "mfa": {
