@@ -52,5 +52,18 @@
       "doorbell_ding": "Doorbell pressed",
       "motion_detected": "Motion detected"
     }
+  },
+  "entity": {
+    "event": {
+      "doorbell": {
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "doorbell_ding": "Doorbell pressed"
+            }
+          }
+        }
+      }
+    }
   }
 }
